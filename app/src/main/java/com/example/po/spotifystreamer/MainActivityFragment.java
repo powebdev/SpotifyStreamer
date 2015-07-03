@@ -50,7 +50,7 @@ public class MainActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    SearchForArtistTask searchTask = new SearchForArtistTask();
+                    QuerySpotifyTask searchTask = new QuerySpotifyTask();
                     searchTask.execute(v.getText().toString());
                     handled = true;
                 }
@@ -62,8 +62,8 @@ public class MainActivityFragment extends Fragment {
         return rootView;
     }
 
-    public class SearchForArtistTask extends AsyncTask<String, Void, ArtistsPager>{
-        private final String LOG_TAG = SearchForArtistTask.class.getSimpleName();
+    public class QuerySpotifyTask extends AsyncTask<String, Void, ArtistsPager>{
+        private final String LOG_TAG = QuerySpotifyTask.class.getSimpleName();
 
         @Override
         protected ArtistsPager doInBackground(String... artistName){
@@ -88,12 +88,30 @@ public class MainActivityFragment extends Fragment {
                         ArtistInfo newArtist = new ArtistInfo(artist.name,"default");
                         artistListAdapter.add(newArtist);
                     }
-                    else{
-                        ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(artist.images.size()-1).url);
+                    else if(artist.images.size() == 1){
+                        ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(0).url);
                         artistListAdapter.add(newArtist);
                     }
+                    else {
+                        boolean hasTwoHundred = false;
+                        int twoHundredAt = -1;
+                        int totalImages = artist.images.size();
+                        for(int j = 0; j < totalImages; j++){
+                            if(artist.images.get(j).height == 200){
+                                hasTwoHundred = true;
+                                twoHundredAt = j;
+                            }
+                        }
+                        if(hasTwoHundred){
+                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(twoHundredAt).url);
+                            artistListAdapter.add(newArtist);
+                        }
+                        else{
+                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(totalImages-1).url);
+                            artistListAdapter.add(newArtist);
+                        }
 
-
+                    }
                 }
             }
         }
@@ -116,17 +134,20 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent){
+
             //Get the data item for this position
             ArtistInfo artists = getItem(position);
+
             //Check if an existing view is being reused, otherwise inflate the view
             if(convertView == null){
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_artist, parent, false);
             }
+
             //Lookup view for data population
             ImageView artistImage = (ImageView) convertView.findViewById(R.id.list_item_artist_imageview);
             TextView artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
-            //Populate the data into the template view using the data object
 
+            //Populate the data into the template view using the data object
             if(artists.imageLink.equals("default")){
                 Picasso.with(getContext()).load(R.drawable.artist).into(artistImage);
             }
@@ -135,6 +156,7 @@ public class MainActivityFragment extends Fragment {
             }
 
             artistName.setText(artists.name);
+
             //Return the completed view to render on screen
             return convertView;
         }
