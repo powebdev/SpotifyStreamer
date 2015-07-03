@@ -13,7 +13,6 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -28,19 +27,17 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
  */
 public class MainActivityFragment extends Fragment {
 
-    private ArrayAdapter<String> mArtistAdapter;
+    private ArtistListAdapter artistListAdapter;
     public MainActivityFragment() {
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mArtistAdapter =
-                new ArrayAdapter<String>(
-                        getActivity(),
-                        R.layout.list_item_artist,
-                        R.id.list_item_artist_textview,
-                        new ArrayList<String>());
+        //Construct the data source
+        ArrayList<ArtistInfo> arrayOfArtists = new ArrayList<ArtistInfo>();
+        //Create the adapter to convert the array to views
+        artistListAdapter = new ArtistListAdapter(getActivity(), arrayOfArtists);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -50,7 +47,6 @@ public class MainActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    searchForArtist(v.getText().toString());
                     SearchForArtistTask searchTask = new SearchForArtistTask();
                     searchTask.execute(v.getText().toString());
                     handled = true;
@@ -59,17 +55,8 @@ public class MainActivityFragment extends Fragment {
             }
         });
         ListView listView = (ListView) rootView.findViewById(R.id.listview_artist);
-        listView.setAdapter(mArtistAdapter);
+        listView.setAdapter(artistListAdapter);
         return rootView;
-    }
-
-    private void searchForArtist(String output){
-        Context context = getActivity();
-        CharSequence text = output;
-        int duration = Toast.LENGTH_SHORT;
-
-        Toast toast = Toast.makeText(context, text, duration);
-        toast.show();
     }
 
     public class SearchForArtistTask extends AsyncTask<String, Void, ArtistsPager>{
@@ -91,13 +78,47 @@ public class MainActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(ArtistsPager results){
             if(results != null){
-                mArtistAdapter.clear();
+                artistListAdapter.clear();
                 for(int i = 0; i < results.artists.items.size(); i++){
                     Artist artist = results.artists.items.get(i);
-                    mArtistAdapter.add(artist.name);
+                    ArtistInfo newArtist = new ArtistInfo("image",artist.name);
+                    artistListAdapter.add(newArtist);
                 }
             }
         }
     }
 
+    public class ArtistInfo{
+        public String name;
+        public String imageLink;
+
+        public ArtistInfo(String name, String imageLink){
+            this.name = name;
+            this.imageLink = imageLink;
+        }
+    }
+
+    public class ArtistListAdapter extends ArrayAdapter<ArtistInfo>{
+        public ArtistListAdapter(Context context, ArrayList<ArtistInfo> artists){
+            super(context, 0, artists);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent){
+            //Get the data item for this position
+            ArtistInfo artists = getItem(position);
+            //Check if an existing view is being reused, otherwise inflate the view
+            if(convertView == null){
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_artist, parent, false);
+            }
+            //Lookup view for data population
+            TextView artistImage = (TextView) convertView.findViewById(R.id.list_item_artist_imageview);
+            TextView artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
+            //Populate the data into the template view using the data object
+            artistImage.setText(artists.imageLink);
+            artistName.setText(artists.name);
+            //Return the completed view to render on screen
+            return convertView;
+        }
+    }
 }
