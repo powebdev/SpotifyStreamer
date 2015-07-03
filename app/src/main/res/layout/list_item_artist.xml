@@ -6,10 +6,11 @@
     android:orientation="horizontal"
     >
 
-    <TextView
+    <ImageView
         android:id="@+id/list_item_artist_imageview"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
+        android:src="@drawable/artist"
         />
 
     <TextView

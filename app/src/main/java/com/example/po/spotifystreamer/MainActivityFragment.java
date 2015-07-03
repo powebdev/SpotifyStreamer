@@ -11,8 +11,11 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -81,8 +84,16 @@ public class MainActivityFragment extends Fragment {
                 artistListAdapter.clear();
                 for(int i = 0; i < results.artists.items.size(); i++){
                     Artist artist = results.artists.items.get(i);
-                    ArtistInfo newArtist = new ArtistInfo("image",artist.name);
-                    artistListAdapter.add(newArtist);
+                    if(artist.images.isEmpty()){
+                        ArtistInfo newArtist = new ArtistInfo(artist.name,"default");
+                        artistListAdapter.add(newArtist);
+                    }
+                    else{
+                        ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(artist.images.size()-1).url);
+                        artistListAdapter.add(newArtist);
+                    }
+
+
                 }
             }
         }
@@ -112,10 +123,17 @@ public class MainActivityFragment extends Fragment {
                 convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_artist, parent, false);
             }
             //Lookup view for data population
-            TextView artistImage = (TextView) convertView.findViewById(R.id.list_item_artist_imageview);
+            ImageView artistImage = (ImageView) convertView.findViewById(R.id.list_item_artist_imageview);
             TextView artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
             //Populate the data into the template view using the data object
-            artistImage.setText(artists.imageLink);
+
+            if(artists.imageLink.equals("default")){
+                Picasso.with(getContext()).load(R.drawable.artist).into(artistImage);
+            }
+            else{
+                Picasso.with(getContext()).load(artists.imageLink).into(artistImage);
+            }
+
             artistName.setText(artists.name);
             //Return the completed view to render on screen
             return convertView;
