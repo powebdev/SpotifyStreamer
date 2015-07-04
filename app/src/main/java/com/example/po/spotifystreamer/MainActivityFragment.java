@@ -21,6 +21,7 @@ import java.util.ArrayList;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 
 
@@ -30,7 +31,6 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 public class MainActivityFragment extends Fragment {
 
     private ArtistListAdapter artistListAdapter;
-    private ArrayList<ArtistInfo> artistDatabase = new ArrayList<>();
     public MainActivityFragment() {
     }
 
@@ -38,11 +38,11 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         //Construct the data source
-
+        ArrayList<ArtistInfo> arrayOfArtists = new ArrayList<ArtistInfo>();
         //Create the adapter to convert the array to views
-        artistListAdapter = new ArtistListAdapter(getActivity(), artistDatabase);
+        artistListAdapter = new ArtistListAdapter(getActivity(), arrayOfArtists);
 
-        final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
         searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -50,12 +50,8 @@ public class MainActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-
                     QuerySpotifyTask searchTask = new QuerySpotifyTask();
                     searchTask.execute(v.getText().toString());
-//                    ListView listView = (ListView) rootView.findViewById(R.id.listview_artist);
-//                    listView.setSelectionAfterHeaderView();
-
                     handled = true;
                 }
                 return handled;
@@ -84,24 +80,49 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArtistsPager results){
-            if(results != null) {
-                artistDatabase.clear();
-                for (int i = 0; i < results.artists.items.size(); i++) {
-                    artistDatabase.add(new ArtistInfo(results.artists.items.get(i).name, results.artists.items.get(i).id, "default"));
+            if(results != null){
+                artistListAdapter.clear();
+                for(int i = 0; i < results.artists.items.size(); i++){
+                    Artist artist = results.artists.items.get(i);
+                    if(artist.images.isEmpty()){
+                        ArtistInfo newArtist = new ArtistInfo(artist.name,"default");
+                        artistListAdapter.add(newArtist);
+                    }
+                    else if(artist.images.size() == 1){
+                        ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(0).url);
+                        artistListAdapter.add(newArtist);
+                    }
+                    else {
+                        boolean hasTwoHundred = false;
+                        int twoHundredAt = -1;
+                        int totalImages = artist.images.size();
+                        for(int j = 0; j < totalImages; j++){
+                            if(artist.images.get(j).height == 200){
+                                hasTwoHundred = true;
+                                twoHundredAt = j;
+                            }
+                        }
+                        if(hasTwoHundred){
+                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(twoHundredAt).url);
+                            artistListAdapter.add(newArtist);
+                        }
+                        else{
+                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(totalImages-1).url);
+                            artistListAdapter.add(newArtist);
+                        }
+
+                    }
                 }
-                updateArtistListAdapter();
             }
         }
     }
 
     public class ArtistInfo{
         public String name;
-        public String spotifyId;
         public String imageLink;
 
-        public ArtistInfo(String name, String spotifyId, String imageLink){
+        public ArtistInfo(String name, String imageLink){
             this.name = name;
-            this.spotifyId = spotifyId;
             this.imageLink = imageLink;
         }
     }
@@ -140,13 +161,4 @@ public class MainActivityFragment extends Fragment {
             return convertView;
         }
     }
-
-    public void updateArtistListAdapter(){
-        artistListAdapter.clear();
-        for(int k = 0; k < artistDatabase.size(); k++){
-            artistListAdapter.add(artistDatabase.get(k));
-        }
-
-    }
-
 }
