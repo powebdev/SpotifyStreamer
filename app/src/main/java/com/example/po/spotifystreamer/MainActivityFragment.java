@@ -1,6 +1,5 @@
 package com.example.po.spotifystreamer;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,21 +8,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
-
 
 /**
  * A placeholder fragment containing a simple view.
@@ -37,128 +32,115 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        //Construct the data source
-        ArrayList<ArtistInfo> arrayOfArtists = new ArrayList<ArtistInfo>();
-        //Create the adapter to convert the array to views
-        artistListAdapter = new ArtistListAdapter(getActivity(), arrayOfArtists);
+
+        //Create or reload the adapter to convert the array to views
+        if(savedInstanceState != null){
+            ArtistInfo[] savedStateValues = (ArtistInfo[]) savedInstanceState.getParcelableArray("artistKey");
+            if(savedStateValues != null){
+                artistListAdapter = new ArtistListAdapter(getActivity(), new ArrayList<ArtistInfo>(Arrays.asList(savedStateValues)));
+            }
+        }
+        else{
+            artistListAdapter = new ArtistListAdapter(getActivity(), new ArrayList<ArtistInfo>());
+        }
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        fetchArtistResults(rootView);
 
-        EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
-        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    QuerySpotifyTask searchTask = new QuerySpotifyTask();
-                    searchTask.execute(v.getText().toString());
-                    handled = true;
-                }
-                return handled;
-            }
-        });
         ListView listView = (ListView) rootView.findViewById(R.id.listview_artist);
         listView.setAdapter(artistListAdapter);
         return rootView;
     }
 
-    public class QuerySpotifyTask extends AsyncTask<String, Void, ArtistsPager>{
-        private final String LOG_TAG = QuerySpotifyTask.class.getSimpleName();
+    @Override
+    public void onSaveInstanceState(Bundle savedState){
+        super.onSaveInstanceState(savedState);
+
+        ArtistInfo[] stateValuesToSave = artistListAdapter.getValues();
+        savedState.putParcelableArray("artistKey", stateValuesToSave);
+
+    }
+
+    public class QuerySpotifyArtistTask extends AsyncTask<String, Void, ArrayList<ArtistInfo>>{
 
         @Override
-        protected ArtistsPager doInBackground(String... artistName){
+        protected ArrayList<ArtistInfo> doInBackground(String... artistName){
+
             if(artistName.length == 0){
                 return null;
             }
             SpotifyApi spotifyApi = new SpotifyApi();
             SpotifyService spotifyService = spotifyApi.getService();
-            ArtistsPager searchResults = spotifyService.searchArtists(artistName[0]);
+            ArtistsPager artistSearchResults = spotifyService.searchArtists(artistName[0]);
 
-            return searchResults;
+            if(artistSearchResults != null){
+                ArrayList<ArtistInfo> artistInfos = new ArrayList<>();
+                for(int i = 0; i < artistSearchResults.artists.items.size(); i++){
+                    Artist artist = artistSearchResults.artists.items.get(i);
+                    //function here for figuring out the right image to load
+                    int imagePos = findProperImage(artist);
+                    if(imagePos == -1){
+                        artistInfos.add(new ArtistInfo(artist.name, artist.id, "default"));
+                    }
+                    else{
+                        artistInfos.add(new ArtistInfo(artist.name, artist.id, artist.images.get(imagePos).url));
+                    }
 
+                }
+                return artistInfos;
+            }
+            return null;
         }
 
         @Override
-        protected void onPostExecute(ArtistsPager results){
+        protected void onPostExecute(ArrayList<ArtistInfo> results){
             if(results != null){
                 artistListAdapter.clear();
-                for(int i = 0; i < results.artists.items.size(); i++){
-                    Artist artist = results.artists.items.get(i);
-                    if(artist.images.isEmpty()){
-                        ArtistInfo newArtist = new ArtistInfo(artist.name,"default");
-                        artistListAdapter.add(newArtist);
-                    }
-                    else if(artist.images.size() == 1){
-                        ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(0).url);
-                        artistListAdapter.add(newArtist);
-                    }
-                    else {
-                        boolean hasTwoHundred = false;
-                        int twoHundredAt = -1;
-                        int totalImages = artist.images.size();
-                        for(int j = 0; j < totalImages; j++){
-                            if(artist.images.get(j).height == 200){
-                                hasTwoHundred = true;
-                                twoHundredAt = j;
-                            }
-                        }
-                        if(hasTwoHundred){
-                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(twoHundredAt).url);
-                            artistListAdapter.add(newArtist);
-                        }
-                        else{
-                            ArtistInfo newArtist = new ArtistInfo(artist.name,artist.images.get(totalImages-1).url);
-                            artistListAdapter.add(newArtist);
-                        }
+                artistListAdapter.addAll(results);
+            }
+        }
+    }
 
+    public void fetchArtistResults(View rootView){
+
+        EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
+
+        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                boolean handled = false;
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    String searchStr = v.getText().toString();
+                    if(!searchStr.isEmpty()){
+                        QuerySpotifyArtistTask searchTask = new QuerySpotifyArtistTask();
+                        searchTask.execute(v.getText().toString());
+                        handled = true;
+                        return handled;
                     }
                 }
+                return handled;
             }
-        }
+        });
     }
 
-    public class ArtistInfo{
-        public String name;
-        public String imageLink;
-
-        public ArtistInfo(String name, String imageLink){
-            this.name = name;
-            this.imageLink = imageLink;
+    public int findProperImage(Artist artist){
+        int foundImage;
+        if(artist.images.size() == 0){
+            foundImage = -1;
         }
-    }
-
-    public class ArtistListAdapter extends ArrayAdapter<ArtistInfo>{
-        public ArtistListAdapter(Context context, ArrayList<ArtistInfo> artists){
-            super(context, 0, artists);
+        else if(artist.images.size() == 1){
+            foundImage = 0;
         }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent){
-
-            //Get the data item for this position
-            ArtistInfo artists = getItem(position);
-
-            //Check if an existing view is being reused, otherwise inflate the view
-            if(convertView == null){
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item_artist, parent, false);
+        else{
+            int foundTwoHundred = 0;
+            while(foundTwoHundred < artist.images.size()){
+                if(artist.images.get(foundTwoHundred).height == 200){
+                    return foundTwoHundred;
+                }
+                foundTwoHundred++;
             }
-
-            //Lookup view for data population
-            ImageView artistImage = (ImageView) convertView.findViewById(R.id.list_item_artist_imageview);
-            TextView artistName = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
-
-            //Populate the data into the template view using the data object
-            if(artists.imageLink.equals("default")){
-                Picasso.with(getContext()).load(R.drawable.artist).into(artistImage);
-            }
-            else{
-                Picasso.with(getContext()).load(artists.imageLink).into(artistImage);
-            }
-
-            artistName.setText(artists.name);
-
-            //Return the completed view to render on screen
-            return convertView;
+            foundImage = foundTwoHundred - 1;
         }
+        return foundImage;
     }
 }
