@@ -42,6 +42,8 @@ public class ArtistListAdapter extends ArrayAdapter<ArtistInfo> {
         TextView artistNameView = (TextView) convertView.findViewById(R.id.list_item_artist_textview);
         artistNameView.setText(artistInfo.name);
 
+        convertView.setTag(artistInfo.spotifyId);
+
         return convertView;
     }
 
