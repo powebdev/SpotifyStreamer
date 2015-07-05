@@ -13,7 +13,6 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +70,6 @@ public class MainActivityFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Toast.makeText(getActivity(), view.getTag().toString(), Toast.LENGTH_SHORT).show();
                 Intent topTrackIntent = new Intent(getActivity(), TopTracksActivity.class).putExtra(Intent.EXTRA_TEXT, view.getTag().toString());
                 startActivity(topTrackIntent);
             }
@@ -130,8 +128,8 @@ public class MainActivityFragment extends Fragment {
     }
 
     public void fetchArtistResults(String searchString){
-        QuerySpotifyArtistTask searchTask = new QuerySpotifyArtistTask();
-        searchTask.execute(searchString);
+        QuerySpotifyArtistTask searchArtistTask = new QuerySpotifyArtistTask();
+        searchArtistTask.execute(searchString);
     }
 
     public int findProperImage(Artist artist){

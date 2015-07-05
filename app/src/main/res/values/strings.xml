@@ -3,6 +3,6 @@
     <string name="action_settings">Settings</string>
     <string name="enter_artist_names">Enter artist names</string>
     <string name="title_activity_top_tracks">Top 10 Tracks</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="dummy_text">Hello world!</string>
 
 </resources>
