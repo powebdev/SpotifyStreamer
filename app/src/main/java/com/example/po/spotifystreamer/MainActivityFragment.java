@@ -45,7 +45,23 @@ public class MainActivityFragment extends Fragment {
         }
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        fetchArtistResults(rootView);
+        EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
+        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                boolean handled = false;
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    String searchStr = v.getText().toString();
+                    if(!searchStr.isEmpty()){
+                        fetchArtistResults(searchStr);
+                        handled = true;
+                        return handled;
+                    }
+                }
+                return handled;
+            }
+        });
+//
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_artist);
         listView.setAdapter(artistListAdapter);
@@ -72,7 +88,8 @@ public class MainActivityFragment extends Fragment {
             SpotifyApi spotifyApi = new SpotifyApi();
             SpotifyService spotifyService = spotifyApi.getService();
             ArtistsPager artistSearchResults = spotifyService.searchArtists(artistName[0]);
-
+//            Tracks topTracks = spotifyService.getArtistTopTrack(artistSearchResults.artists.items.get(0).id);
+//            topTracks.tracks.get(0).name;
             if(artistSearchResults != null){
                 ArrayList<ArtistInfo> artistInfos = new ArrayList<>();
                 for(int i = 0; i < artistSearchResults.artists.items.size(); i++){
@@ -101,26 +118,9 @@ public class MainActivityFragment extends Fragment {
         }
     }
 
-    public void fetchArtistResults(View rootView){
-
-        EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
-
-        searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    String searchStr = v.getText().toString();
-                    if(!searchStr.isEmpty()){
-                        QuerySpotifyArtistTask searchTask = new QuerySpotifyArtistTask();
-                        searchTask.execute(v.getText().toString());
-                        handled = true;
-                        return handled;
-                    }
-                }
-                return handled;
-            }
-        });
+    public void fetchArtistResults(String searchString){
+        QuerySpotifyArtistTask searchTask = new QuerySpotifyArtistTask();
+        searchTask.execute(searchString);
     }
 
     public int findProperImage(Artist artist){
