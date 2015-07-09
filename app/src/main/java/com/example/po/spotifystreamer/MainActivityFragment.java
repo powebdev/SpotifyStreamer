@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,19 +100,17 @@ public class MainActivityFragment extends Fragment {
             ArtistsPager artistSearchResults = spotifyService.searchArtists(artistName[0]);
 //            Tracks topTracks = spotifyService.getArtistTopTrack(artistSearchResults.artists.items.get(0).id);
 //            topTracks.tracks.get(0).name;
-            if(artistSearchResults != null){
+            if (artistSearchResults != null && artistSearchResults.artists.items.size() > 0) {
                 ArrayList<ArtistInfo> artistInfos = new ArrayList<>();
-                for(int i = 0; i < artistSearchResults.artists.items.size(); i++){
+                for (int i = 0; i < artistSearchResults.artists.items.size(); i++) {
                     Artist artist = artistSearchResults.artists.items.get(i);
                     //function here for figuring out the right image to load
                     int imagePos = findProperImage(artist);
-                    if(imagePos == -1){
+                    if (imagePos == -1) {
                         artistInfos.add(new ArtistInfo(artist.name, artist.id, "default"));
-                    }
-                    else{
+                    } else {
                         artistInfos.add(new ArtistInfo(artist.name, artist.id, artist.images.get(imagePos).url));
                     }
-
                 }
                 return artistInfos;
             }
@@ -120,9 +119,12 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<ArtistInfo> results){
+            artistListAdapter.clear();
             if(results != null){
-                artistListAdapter.clear();
                 artistListAdapter.addAll(results);
+            }
+            else{
+                Toast.makeText(getActivity(), "No artists found, try a different name", Toast.LENGTH_SHORT).show();
             }
         }
     }

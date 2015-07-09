@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,7 +65,7 @@ public class TopTracksActivityFragment extends Fragment {
             availableMarket.put("country", "US");
             Tracks topTracks = spotifyService.getArtistTopTrack(artistId[0], availableMarket);
 
-            if(topTracks != null){
+            if(topTracks != null && topTracks.tracks.size() > 0){
                 ArrayList<TopTrackInfo> topTrackInfos = new ArrayList<>();
                 for(int i = 0; i < topTracks.tracks.size(); i++){
                     Track track = topTracks.tracks.get(i);
@@ -81,6 +82,9 @@ public class TopTracksActivityFragment extends Fragment {
             if(results != null){
                 topTrackListAdapter.clear();
                 topTrackListAdapter.addAll(results);
+            }
+            else{
+                Toast.makeText(getActivity(), "No top tracks found", Toast.LENGTH_SHORT).show();
             }
         }
     }
