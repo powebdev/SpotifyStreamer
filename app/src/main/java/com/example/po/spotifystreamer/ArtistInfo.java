@@ -4,12 +4,15 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
+ * This class stores the information from the artist name search results
+ * The custom ArrayAdapter uses this information to populate the artist listview
  * Created by Po on 7/3/2015.
  */
 public class ArtistInfo implements Parcelable{
-    String name;
-    String spotifyId;
-    String imageLink;
+
+    String name;        //artist name
+    String spotifyId;   //spotify ID for the artist
+    String imageLink;   //url for the artist image
 
     public ArtistInfo(String artistName, String artistSpotifyId, String artistImageLink){
         this.name = artistName;

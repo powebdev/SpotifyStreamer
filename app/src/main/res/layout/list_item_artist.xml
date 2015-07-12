@@ -12,8 +12,8 @@
 
     <ImageView
         android:id="@+id/list_item_artist_imageview"
-        android:layout_height="80dp"
-        android:layout_width="80dp"
+        android:layout_height="@dimen/artist_image_height"
+        android:layout_width="@dimen/artist_image_width"
         android:src="@drawable/artist"
         />
 

@@ -4,5 +4,7 @@
     <string name="enter_artist_names">Enter artist names</string>
     <string name="title_activity_top_tracks">Top 10 Tracks</string>
     <string name="dummy_text">Hello world!</string>
+    <string name="no_artists_result_text">No artists found, try a different name</string>
+    <string name="no_tracks_result_text">No top tracks found</string>
 
 </resources>

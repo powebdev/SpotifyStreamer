@@ -8,6 +8,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.List;
 
 /**
@@ -28,7 +30,12 @@ public class TopTrackListAdapter extends ArrayAdapter<TopTrackInfo> {
         }
 
         ImageView imageView = (ImageView) convertView.findViewById(R.id.list_item_top_track_imageview);
-        imageView.setImageResource(R.drawable.record);
+        if(topTrackInfo.imageLink.equals("default")){
+            imageView.setImageResource(R.drawable.artist);
+        }
+        else{
+            Picasso.with(getContext()).load(topTrackInfo.imageLink).into(imageView);
+        }
 
         TextView trackNameView = (TextView) convertView.findViewById(R.id.list_item_top_track_name_textview);
         trackNameView.setText(topTrackInfo.name);

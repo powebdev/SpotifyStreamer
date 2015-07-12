@@ -29,6 +29,8 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 public class MainActivityFragment extends Fragment {
 
     private ArtistListAdapter artistListAdapter;
+    private Toast noResultsToast;
+
     public MainActivityFragment() {
     }
 
@@ -61,6 +63,7 @@ public class MainActivityFragment extends Fragment {
                         return handled;
                     }
                 }
+
                 return handled;
             }
         });
@@ -124,16 +127,28 @@ public class MainActivityFragment extends Fragment {
                 artistListAdapter.addAll(results);
             }
             else{
-                Toast.makeText(getActivity(), "No artists found, try a different name", Toast.LENGTH_SHORT).show();
+                if(noResultsToast != null){
+                    noResultsToast.cancel();
+                }
+                noResultsToast.makeText(getActivity(), R.string.no_artists_result_text, Toast.LENGTH_SHORT).show();
             }
         }
     }
 
+    /**
+     * This method uses an AsyncTask to query the Spotify API for an artist name search
+     * @param searchString the artist to search for
+     */
     public void fetchArtistResults(String searchString){
         QuerySpotifyArtistTask searchArtistTask = new QuerySpotifyArtistTask();
         searchArtistTask.execute(searchString);
     }
 
+    /**
+     * This method find the url of the image with proper size, in this case with height of 200 px
+     * @param artist the artist whose image to search for
+     * @return an integer which indicates the array position of the found image
+     */
     public int findProperImage(Artist artist){
         int foundImage;
         if(artist.images.size() == 0){

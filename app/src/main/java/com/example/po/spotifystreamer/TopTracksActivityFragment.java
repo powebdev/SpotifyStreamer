@@ -16,6 +16,7 @@ import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 
@@ -25,9 +26,10 @@ import kaaes.spotify.webapi.android.models.Tracks;
  */
 public class TopTracksActivityFragment extends Fragment {
 
-    private static final String LOG_TAG = TopTracksActivityFragment.class.getSimpleName();
     private TopTrackListAdapter topTrackListAdapter;
     private String artistId;
+    private Toast noResultsToast;
+
     public TopTracksActivityFragment() {
     }
 
@@ -41,9 +43,7 @@ public class TopTracksActivityFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
             artistId = intent.getStringExtra(Intent.EXTRA_TEXT);
-
-            QuerySpotifyTopTracksTask searchTopTrackTask = new QuerySpotifyTopTracksTask();
-            searchTopTrackTask.execute(artistId);
+            fetchTracksResults(artistId);
             ListView listView = (ListView) rootView.findViewById(R.id.listview_top_track);
             listView.setAdapter(topTrackListAdapter);
         }
@@ -63,13 +63,21 @@ public class TopTracksActivityFragment extends Fragment {
             SpotifyService spotifyService = spotifyApi.getService();
             Map availableMarket = new HashMap();
             availableMarket.put("country", "US");
+            Artist artist = spotifyService.getArtist(artistId[0]);
             Tracks topTracks = spotifyService.getArtistTopTrack(artistId[0], availableMarket);
 
             if(topTracks != null && topTracks.tracks.size() > 0){
                 ArrayList<TopTrackInfo> topTrackInfos = new ArrayList<>();
                 for(int i = 0; i < topTracks.tracks.size(); i++){
                     Track track = topTracks.tracks.get(i);
-                    topTrackInfos.add(new TopTrackInfo(track.name, track.album.name, "default"));
+
+                    int imagePos = findProperImage(track);
+                    if (imagePos == -1) {
+                        topTrackInfos.add(new TopTrackInfo(track.name, artist.name, track.album.name, "default"));
+                    } else {
+                        topTrackInfos.add(new TopTrackInfo(track.name, artist.name, track.album.name, track.album.images.get(0).url));
+                    }
+
 
                 }
                 return topTrackInfos;
@@ -84,9 +92,47 @@ public class TopTracksActivityFragment extends Fragment {
                 topTrackListAdapter.addAll(results);
             }
             else{
-                Toast.makeText(getActivity(), "No top tracks found", Toast.LENGTH_SHORT).show();
+                if(noResultsToast != null){
+                    noResultsToast.cancel();
+                }
+                noResultsToast.makeText(getActivity(), R.string.no_tracks_result_text, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    /**
+     * This method uses an AsyncTask to query the Spotify API for an artist top tracks search
+     * @param searchString the artist to search for
+     */
+    public void fetchTracksResults(String searchString){
+        QuerySpotifyTopTracksTask searchTopTrackTask = new QuerySpotifyTopTracksTask();
+        searchTopTrackTask.execute(searchString);
+    }
+
+    /**
+     * This method find the url of the image with proper size, in this case with height of 640 px
+     * @param track the track to search the image for
+     * @return an integer which indicates the array position of the found image
+     */
+    public int findProperImage(Track track){
+        int foundImage;
+        if(track.album.images.size() == 0){
+            foundImage = -1;
+        }
+        else if(track.album.images.size() == 1){
+            foundImage = 0;
+        }
+        else{
+            int foundSixForty = 0;
+            while(foundSixForty < track.album.images.size()){
+                if(track.album.images.get(foundSixForty).height == 640){
+                    return foundSixForty;
+                }
+                foundSixForty++;
+            }
+            foundImage = foundSixForty - 1;
+        }
+        return foundImage;
     }
 
 }
