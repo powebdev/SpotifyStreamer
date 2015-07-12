@@ -11,6 +11,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +38,18 @@ public class TopTracksActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        topTrackListAdapter = new TopTrackListAdapter(getActivity(), new ArrayList<TopTrackInfo>());
+        //Create or reload the adapter to convert the array to views
+        if(savedInstanceState != null){
+            TopTrackInfo[] savedStateValues = (TopTrackInfo[]) savedInstanceState.getParcelableArray("topTrackKey");
+            if(savedStateValues != null){
+                topTrackListAdapter = new TopTrackListAdapter(getActivity(), new ArrayList<TopTrackInfo>(Arrays.asList(savedStateValues)));
+            }
+        }
+        else{
+            topTrackListAdapter = new TopTrackListAdapter(getActivity(), new ArrayList<TopTrackInfo>());
+        }
+
+
         View  rootView = inflater.inflate(R.layout.fragment_top_tracks, container, false);
 
         Intent intent = getActivity().getIntent();
@@ -51,6 +63,14 @@ public class TopTracksActivityFragment extends Fragment {
         return rootView;
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedState){
+        super.onSaveInstanceState(savedState);
+
+        TopTrackInfo[] stateValuesToSave = topTrackListAdapter.getValues();
+        savedState.putParcelableArray("topTrackKey", stateValuesToSave);
+
+    }
     public class QuerySpotifyTopTracksTask extends AsyncTask<String, Void, ArrayList<TopTrackInfo>> {
 
         @Override
