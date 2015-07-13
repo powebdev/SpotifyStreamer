@@ -32,7 +32,7 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 public class MainActivityFragment extends Fragment {
 
     private ArtistListAdapter artistListAdapter;
-    private Toast noResultsToast;
+    public Toast noResultsToast;
 
     public MainActivityFragment() {
     }
@@ -68,10 +68,7 @@ public class MainActivityFragment extends Fragment {
                         }
                     }
                     else{
-                        if(noResultsToast != null){
-                            noResultsToast.cancel();
-                        }
-                        noResultsToast.makeText(getActivity(), R.string.no_network_connection_text, Toast.LENGTH_SHORT).show();
+                        showToast(R.string.no_network_connection_text);
                         handled = false;
                         return handled;
                     }
@@ -88,8 +85,19 @@ public class MainActivityFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                Intent topTrackIntent = new Intent(getActivity(), TopTracksActivity.class).putExtra(Intent.EXTRA_TEXT, view.getTag().toString());
-                startActivity(topTrackIntent);
+                if(hasConnection()){
+                    Intent topTrackIntent = new Intent(getActivity(), TopTracksActivity.class);
+                    Bundle infoStrings = new Bundle();
+                    infoStrings.putString("EXTRA_ARTIST_ID", view.getTag().toString());
+                    TextView artistNameTextview = (TextView) view.findViewById(R.id.list_item_artist_textview);
+                    infoStrings.putString("EXTRA_ARTIST_NAME", artistNameTextview.getText().toString());
+                    topTrackIntent.putExtras(infoStrings);
+                    startActivity(topTrackIntent);
+                }
+                else{
+                    showToast(R.string.no_network_connection_text);
+                }
+
             }
         });
         return rootView;
@@ -141,10 +149,7 @@ public class MainActivityFragment extends Fragment {
                 artistListAdapter.addAll(results);
             }
             else{
-                if(noResultsToast != null){
-                    noResultsToast.cancel();
-                }
-                noResultsToast.makeText(getActivity(), R.string.no_artists_result_text, Toast.LENGTH_SHORT).show();
+                showToast(R.string.no_artists_result_text);
             }
         }
     }
@@ -195,5 +200,17 @@ public class MainActivityFragment extends Fragment {
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         return hasConnection;
+    }
+
+    /**
+     * this method shows the proper toast message depends on the context
+     * @param toastMsg xml string id used to display proper message
+     */
+    public void showToast(int toastMsg){
+        if(noResultsToast != null){
+            noResultsToast.cancel();
+        }
+        noResultsToast = Toast.makeText(getActivity(), toastMsg, Toast.LENGTH_SHORT);
+        noResultsToast.show();
     }
 }

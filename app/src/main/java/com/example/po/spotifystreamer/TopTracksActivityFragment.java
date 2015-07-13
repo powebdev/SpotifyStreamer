@@ -1,9 +1,6 @@
 package com.example.po.spotifystreamer;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -32,7 +29,7 @@ public class TopTracksActivityFragment extends Fragment {
 
     private TopTrackListAdapter topTrackListAdapter;
     private String artistId;
-    private Toast noResultsToast;
+    public Toast noResultsToast;
 
     public TopTracksActivityFragment() {
     }
@@ -52,21 +49,11 @@ public class TopTracksActivityFragment extends Fragment {
         else{
             topTrackListAdapter = new TopTrackListAdapter(getActivity(), new ArrayList<TopTrackInfo>());
             Intent intent = getActivity().getIntent();
-            if(intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-                if(hasConnection()){
-                    artistId = intent.getStringExtra(Intent.EXTRA_TEXT);
-                    fetchTracksResults(artistId);
-                }
-                else{
-                    if(noResultsToast != null){
-                        noResultsToast.cancel();
-                    }
-                    noResultsToast.makeText(getActivity(), R.string.no_network_connection_text, Toast.LENGTH_SHORT).show();
-                }
-
-
+            if(intent != null && intent.hasExtra("EXTRA_ARTIST_ID")){
+                Bundle extraInfos = intent.getExtras();
+                artistId = extraInfos.getString("EXTRA_ARTIST_ID");
+                fetchTracksResults(artistId);
             }
-
         }
         ListView listView = (ListView) rootView.findViewById(R.id.listview_top_track);
         listView.setAdapter(topTrackListAdapter);
@@ -165,18 +152,4 @@ public class TopTracksActivityFragment extends Fragment {
         }
         return foundImage;
     }
-
-    /**
-     * this method check whether or not there is connection to the internet
-     * @return true if there is connection and false if there is not
-     */
-    public boolean hasConnection(){
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        return hasConnection;
-    }
-
 }
