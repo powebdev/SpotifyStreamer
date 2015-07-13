@@ -6,5 +6,6 @@
     <string name="dummy_text">Hello world!</string>
     <string name="no_artists_result_text">No artists found, try a different name</string>
     <string name="no_tracks_result_text">No top tracks found</string>
+    <string name="no_network_connection_text">Cannot reach the internet, check your network connection</string>
 
 </resources>

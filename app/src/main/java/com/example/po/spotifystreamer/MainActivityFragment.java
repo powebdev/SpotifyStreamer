@@ -1,6 +1,9 @@
 package com.example.po.spotifystreamer;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -56,12 +59,23 @@ public class MainActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    String searchStr = v.getText().toString();
-                    if(!searchStr.isEmpty()){
-                        fetchArtistResults(searchStr);
-                        handled = true;
+                    if (hasConnection()) {
+                        String searchStr = v.getText().toString();
+                        if(!searchStr.isEmpty()){
+                            fetchArtistResults(searchStr);
+                            handled = true;
+                            return handled;
+                        }
+                    }
+                    else{
+                        if(noResultsToast != null){
+                            noResultsToast.cancel();
+                        }
+                        noResultsToast.makeText(getActivity(), R.string.no_network_connection_text, Toast.LENGTH_SHORT).show();
+                        handled = false;
                         return handled;
                     }
+
                 }
 
                 return handled;
@@ -168,5 +182,18 @@ public class MainActivityFragment extends Fragment {
             foundImage = foundTwoHundred - 1;
         }
         return foundImage;
+    }
+
+    /**
+     * this method check whether or not there is connection to the internet
+     * @return true if there is connection and false if there is not
+     */
+    public boolean hasConnection(){
+        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        return hasConnection;
     }
 }
