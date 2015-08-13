@@ -29,7 +29,7 @@ public class TopTracksActivityFragment extends Fragment {
 
     private TopTrackListAdapter topTrackListAdapter;
     private String artistId;
-    public Toast noResultsToast;
+    private Toast noResultsToast;
 
     public TopTracksActivityFragment() {
     }

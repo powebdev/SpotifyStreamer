@@ -2,9 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.po.spotifystreamer" >
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-sdk android:minSdkVersion="11"/>
+    <uses-sdk android:minSdkVersion="11" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--<android:uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
+    <!--<android:uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
+    <!--<android:uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />-->
 
     <application
         android:allowBackup="true"
@@ -24,6 +29,13 @@
             android:name=".TopTracksActivity"
             android:label="@string/title_activity_top_tracks" >
         </activity>
+        <activity
+            android:name=".PlayerActivity"
+            android:label="@string/title_activity_player" >
+        </activity>
+        <provider
+            android:authorities="com.example.po.spotifystreamer"
+            android:name=".data.MusicProvider" />
     </application>
 
 </manifest>
