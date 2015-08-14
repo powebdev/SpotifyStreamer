@@ -24,8 +24,6 @@ import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
-import kaaes.spotify.webapi.android.models.Artist;
-
 //import android.content.Loader;
 
 
@@ -175,7 +173,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle){
-        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_NAME + " ASC";
+        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_POPULARITY + " DESC";
         Uri artistUri = MusicContract.ArtistEntry.CONTENT_URI;
 
         return new CursorLoader(getActivity(),
@@ -205,31 +203,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 //        //searchArtistTask.execute(searchString);
 //    }
 
-    /**
-     * This method find the url of the image with proper size, in this case with height of 200 px
-     * @param artist the artist whose image to search for
-     * @return an integer which indicates the array position of the found image
-     */
-    public int findProperImage(Artist artist){
-        int foundImage;
-        if(artist.images.size() == 0){
-            foundImage = -1;
-        }
-        else if(artist.images.size() == 1){
-            foundImage = 0;
-        }
-        else{
-            int foundTwoHundred = 0;
-            while(foundTwoHundred < artist.images.size()){
-                if(artist.images.get(foundTwoHundred).height == 200){
-                    return foundTwoHundred;
-                }
-                foundTwoHundred++;
-            }
-            foundImage = foundTwoHundred - 1;
-        }
-        return foundImage;
-    }
+
 
     /**
      * this method check whether or not there is connection to the internet
@@ -260,7 +234,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     @Override
     public void onStart(){
         super.onStart();
-        FetchResultTask queryTask = new FetchResultTask(getActivity());
+        FetchArtistTask queryTask = new FetchArtistTask(getActivity());
         queryTask.execute("Coldplay");
     }
 }
