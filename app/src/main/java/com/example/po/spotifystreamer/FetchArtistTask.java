@@ -55,6 +55,7 @@ public class FetchArtistTask extends AsyncTask<String, Void, Void> {
                 if (cVVector.size() > 0) {
                     ContentValues[] cvArray = new ContentValues[cVVector.size()];
                     cVVector.toArray(cvArray);
+                    int deleted = mContext.getContentResolver().delete(MusicContract.ArtistEntry.CONTENT_URI, null, null);
                     inserted = mContext.getContentResolver().bulkInsert(MusicContract.ArtistEntry.CONTENT_URI, cvArray);
                 }
 

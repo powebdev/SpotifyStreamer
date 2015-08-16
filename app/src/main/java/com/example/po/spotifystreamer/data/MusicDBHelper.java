@@ -46,6 +46,8 @@ public class MusicDbHelper extends SQLiteOpenHelper {
                         MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " INTEGER NOT NULL, " +
                         MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY + " TEXT NOT NULL, " +
                         MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY + " TEXT NOT NULL, " +
+                        MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_LARGE + " TEXT NOT NULL, " +
+                        MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_SMALL + " TEXT NOT NULL, " +
                         " UNIQUE (" + MusicContract.TopTrackEntry.COLUMN_TRACK_SPOTIFY_ID + ") ON CONFLICT REPLACE);";
 
 //        final String SQL_CREATE_TRACK_TABLE =

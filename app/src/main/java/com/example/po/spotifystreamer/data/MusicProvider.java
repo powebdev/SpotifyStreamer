@@ -15,10 +15,10 @@ public class MusicProvider extends ContentProvider{
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private MusicDbHelper mMusicDbOpenHelper;
 
-    static final int SEARCH_RESULT_ARTISTS = 100;
-    static final int SEARCH_ONE_ARTIST = 101;
-    static final int SEARCH_RESULT_TOP_TRACKS = 200;
-    static final int SEARCH_ONE_TRACK = 201;
+    static final int ARTISTS = 100;
+    static final int SINGLE_ARTIST = 101;
+    static final int TOP_TRACKS = 200;
+    static final int SINGLE_TRACK = 201;
 
     @Override
     public boolean onCreate(){
@@ -33,13 +33,13 @@ public class MusicProvider extends ContentProvider{
         final int match = sUriMatcher.match(uri);
 
         switch (match){
-            case SEARCH_RESULT_ARTISTS:
+            case ARTISTS:
                 return MusicContract.ArtistEntry.CONTENT_TYPE;
-            case SEARCH_ONE_ARTIST:
+            case SINGLE_ARTIST:
                 return MusicContract.ArtistEntry.CONTENT_ITEM_TYPE;
-            case SEARCH_RESULT_TOP_TRACKS:
+            case TOP_TRACKS:
                 return MusicContract.TopTrackEntry.CONTENT_TYPE;
-            case SEARCH_ONE_TRACK:
+            case SINGLE_TRACK:
                 return MusicContract.TopTrackEntry.CONTENT_ITEM_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -51,7 +51,7 @@ public class MusicProvider extends ContentProvider{
 
         Cursor returnCursor;
         switch(sUriMatcher.match(uri)){
-            case SEARCH_RESULT_ARTISTS:{
+            case ARTISTS:{
                 returnCursor = mMusicDbOpenHelper.getReadableDatabase().query(
                         MusicContract.ArtistEntry.TABLE_NAME,
                         projection,
@@ -63,12 +63,42 @@ public class MusicProvider extends ContentProvider{
                 );
                 break;
             }
-            case SEARCH_RESULT_TOP_TRACKS:{
+            case SINGLE_ARTIST: {
+                String idSelection = MusicContract.ArtistEntry.TABLE_NAME + "." + MusicContract.ArtistEntry._ID + " = ? ";
+                String id = uri.getLastPathSegment();
+
+                returnCursor = mMusicDbOpenHelper.getReadableDatabase().query(
+                        MusicContract.ArtistEntry.TABLE_NAME,
+                        projection,
+                        idSelection,
+                        new String[]{id},
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            case TOP_TRACKS:{
                 returnCursor = mMusicDbOpenHelper.getReadableDatabase().query(
                         MusicContract.TopTrackEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+            case SINGLE_TRACK:{
+                String idSelection = MusicContract.TopTrackEntry.TABLE_NAME + "." + MusicContract.TopTrackEntry._ID + " = ? ";
+                String id = uri.getLastPathSegment();
+
+                returnCursor = mMusicDbOpenHelper.getReadableDatabase().query(
+                        MusicContract.TopTrackEntry.TABLE_NAME,
+                        projection,
+                        idSelection,
+                        new String[]{id},
                         null,
                         null,
                         sortOrder
@@ -90,10 +120,18 @@ public class MusicProvider extends ContentProvider{
         Uri returnUri;
 
         switch(match){
-            case SEARCH_RESULT_ARTISTS:{
+            case ARTISTS:{
                 long _id = db.insert(MusicContract.ArtistEntry.TABLE_NAME, null, values);
                 if(_id > 0)
                     returnUri = MusicContract.ArtistEntry.buildArtistUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
+            case TOP_TRACKS:{
+                long _id = db.insert(MusicContract.TopTrackEntry.TABLE_NAME, null, values);
+                if(_id >0)
+                    returnUri = MusicContract.TopTrackEntry.buildTopTrackUri(_id);
                 else
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
@@ -109,10 +147,11 @@ public class MusicProvider extends ContentProvider{
     public int bulkInsert(Uri uri, ContentValues[] values) {
         final SQLiteDatabase db = mMusicDbOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
+        int returnCount;
         switch (match) {
-            case SEARCH_RESULT_ARTISTS:
+            case ARTISTS:
                 db.beginTransaction();
-                int returnCount = 0;
+                returnCount = 0;
                 try {
                     for (ContentValues value : values) {
                         long _id = db.insert(MusicContract.ArtistEntry.TABLE_NAME, null, value);
@@ -122,6 +161,22 @@ public class MusicProvider extends ContentProvider{
                     }
                     db.setTransactionSuccessful();
                 } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            case TOP_TRACKS:
+                db.beginTransaction();
+                returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        long _id = db.insert(MusicContract.TopTrackEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                }finally {
                     db.endTransaction();
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
@@ -142,8 +197,11 @@ public class MusicProvider extends ContentProvider{
             selection = "1";
 
         switch(match){
-            case SEARCH_RESULT_ARTISTS:
+            case ARTISTS:
                 rowsDeleted = db.delete(MusicContract.ArtistEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case TOP_TRACKS:
+                rowsDeleted = db.delete(MusicContract.TopTrackEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -164,8 +222,11 @@ public class MusicProvider extends ContentProvider{
         int rowsUpdated;
 
         switch (match){
-            case SEARCH_RESULT_ARTISTS:
+            case ARTISTS:
                 rowsUpdated = db.update(MusicContract.ArtistEntry.TABLE_NAME, values, selection, selectionArgs);
+                break;
+            case TOP_TRACKS:
+                rowsUpdated = db.update(MusicContract.TopTrackEntry.TABLE_NAME, values, selection, selectionArgs);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -181,10 +242,10 @@ public class MusicProvider extends ContentProvider{
         final UriMatcher musicUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         final String authority = MusicContract.CONTENT_AUTHORITY;
 
-        musicUriMatcher.addURI(authority, MusicContract.PATH_ARTIST, SEARCH_RESULT_ARTISTS);
-        musicUriMatcher.addURI(authority, MusicContract.PATH_ARTIST + "/#", SEARCH_ONE_ARTIST);
-        musicUriMatcher.addURI(authority, MusicContract.PATH_TOP_TRACK, SEARCH_RESULT_TOP_TRACKS);
-        musicUriMatcher.addURI(authority, MusicContract.PATH_TOP_TRACK + "/#", SEARCH_ONE_TRACK);
+        musicUriMatcher.addURI(authority, MusicContract.PATH_ARTIST, ARTISTS);
+        musicUriMatcher.addURI(authority, MusicContract.PATH_ARTIST + "/#", SINGLE_ARTIST);
+        musicUriMatcher.addURI(authority, MusicContract.PATH_TOP_TRACK, TOP_TRACKS);
+        musicUriMatcher.addURI(authority, MusicContract.PATH_TOP_TRACK + "/#", SINGLE_TRACK);
 
         return musicUriMatcher;
     }

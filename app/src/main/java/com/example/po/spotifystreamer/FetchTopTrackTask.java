@@ -7,14 +7,12 @@ import android.util.Log;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 
@@ -30,8 +28,8 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(String... artistId) {
-        if (artistId.length == 0) {
+    protected Void doInBackground(String... artistInfo) {
+        if (artistInfo.length == 0) {
             return null;
         }
 
@@ -39,13 +37,11 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
         SpotifyService spotifyService = spotifyApi.getService();
         Map availableMarket = new HashMap();
         availableMarket.put("country", "US");
-        Artist artist = spotifyService.getArtist(artistId[0]);
-        Tracks topTracks = spotifyService.getArtistTopTrack(artistId[0], availableMarket);
+        Tracks topTracks = spotifyService.getArtistTopTrack(artistInfo[0], availableMarket);
 
         if (topTracks != null && topTracks.tracks.size() > 0) {
             Vector<ContentValues> cVVector = new Vector<ContentValues>(topTracks.tracks.size());
 
-//            ArrayList<TopTrackInfo> topTrackInfos = new ArrayList<>();
             for (int i = 0; i < topTracks.tracks.size(); i++) {
                 Track track = topTracks.tracks.get(i);
                 ContentValues trackValues = new ContentValues();
@@ -53,8 +49,10 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
                 trackValues.put(MusicContract.TopTrackEntry.COLUMN_TRACK_SPOTIFY_ID, track.id);
                 trackValues.put(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL, track.preview_url);
                 trackValues.put(MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY, track.popularity);
-                trackValues.put(MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY, artistId[0]);
+                trackValues.put(MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY, artistInfo[1]);
                 trackValues.put(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY, track.album.name);
+                trackValues.put(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_LARGE, "default");
+                trackValues.put(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_SMALL, "default");
 
                 cVVector.add(trackValues);
 
@@ -62,6 +60,7 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
                 if(cVVector.size() > 0){
                     ContentValues[] cvArray = new ContentValues[cVVector.size()];
                     cVVector.toArray(cvArray);
+                    int deleted = mContext.getContentResolver().delete(MusicContract.TopTrackEntry.CONTENT_URI, null, null);
                     inserted = mContext.getContentResolver().bulkInsert(MusicContract.TopTrackEntry.CONTENT_URI, cvArray);
                 }
 

@@ -56,6 +56,8 @@ public class MusicContract {
         public static final String COLUMN_TRACK_POPULARITY = "track_popularity";
         public static final String COLUMN_ARTIST_KEY = "artist_id";
         public static final String COLUMN_ALBUM_KEY = "album_id";
+        public static final String COLUMN_ALBUM_ART_LARGE = "album_art_large";
+        public static final String COLUMN_ALBUM_ART_SMALL = "album_art_small";
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_TOP_TRACK).build();
         public static final String CONTENT_TYPE =

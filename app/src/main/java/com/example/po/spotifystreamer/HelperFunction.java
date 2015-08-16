@@ -1,5 +1,10 @@
 package com.example.po.spotifystreamer;
 
+import android.app.Activity;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import kaaes.spotify.webapi.android.models.Artist;
 
 /**
@@ -7,7 +12,7 @@ import kaaes.spotify.webapi.android.models.Artist;
  */
 public class HelperFunction {
 
-    public int findProperImage(Artist artist) {
+    public static int findProperImage(Artist artist) {
         int foundImage;
         if (artist.images.size() == 0) {
             foundImage = -1;
@@ -24,5 +29,15 @@ public class HelperFunction {
             foundImage = foundTwoHundred - 1;
         }
         return foundImage;
+    }
+
+    public static boolean hasConnection(Activity activity){
+        ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(
+                Context.CONNECTIVITY_SERVICE);
+
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        return hasConnection;
     }
 }

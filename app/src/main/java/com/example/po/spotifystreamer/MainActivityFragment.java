@@ -1,10 +1,7 @@
 package com.example.po.spotifystreamer;
 
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -24,10 +21,6 @@ import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
-//import android.content.Loader;
-
-
-
 /**
  * A placeholder fragment containing a simple view.
  */
@@ -35,7 +28,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 
     private static final int ARTIST_LOADER_ID = 0;
     private ArtistAdapter mArtistAdapter;
-    private ArtistListAdapter artistListAdapter;
     public Toast noResultsToast;
 
     public MainActivityFragment() {
@@ -64,7 +56,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 //            artistListAdapter = new ArtistListAdapter(getActivity(), new ArrayList<ArtistInfo>());
 //        }
 
-        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_NAME + " ASC";
+        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_POPULARITY + " DESC";
         Cursor cur = getActivity().getContentResolver().query(MusicContract.ArtistEntry.CONTENT_URI, null, null, null, sortOrder);
         mArtistAdapter = new ArtistAdapter(getActivity(), cur, 0);
 
@@ -75,10 +67,10 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    if (hasConnection()) {
+                    if (HelperFunction.hasConnection(getActivity())) {
                         String searchStr = v.getText().toString();
                         if(!searchStr.isEmpty()){
-                            //fetchArtistResults(searchStr);
+                            fetchArtistResults(searchStr);
                             handled = true;
                             return handled;
                         }
@@ -100,17 +92,27 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         listView.setAdapter(mArtistAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                if(hasConnection()){
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                if(HelperFunction.hasConnection(getActivity())){
                     Intent topTrackIntent = new Intent(getActivity(), TopTracksActivity.class);
                     Bundle infoStrings = new Bundle();
-                    infoStrings.putString("EXTRA_ARTIST_ID", view.getTag().toString());
-                    TextView artistNameTextview = (TextView) view.findViewById(
-                            R.id.list_item_artist_textview);
-                    infoStrings.putString("EXTRA_ARTIST_NAME", artistNameTextview.getText()
-                            .toString());
-                    topTrackIntent.putExtras(infoStrings);
-                    startActivity(topTrackIntent);
+                    Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
+                    if(cursor != null){
+                        int inx_artist_id = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_SPOTIFY_ID);
+                        String artistId = cursor.getString(inx_artist_id);
+
+                        int inx_artist_name = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_NAME);
+                        String artistName = cursor.getString(inx_artist_name);
+                        String[] artistInfo = {artistId, artistName};
+
+                        fetchTracksResults(artistInfo);
+
+                        infoStrings.putString("EXTRA_ARTIST_NAME", artistName);
+                        topTrackIntent.putExtras(infoStrings);
+                        startActivity(topTrackIntent);
+                    }
+
+
                 }
                 else{
                     showToast(R.string.no_network_connection_text);
@@ -120,56 +122,6 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         });
         return rootView;
     }
-
-//    @Override
-//    public void onSaveInstanceState(Bundle savedState){
-//        super.onSaveInstanceState(savedState);
-//
-//        ArtistInfo[] stateValuesToSave = artistListAdapter.getValues();
-//        savedState.putParcelableArray("artistKey", stateValuesToSave);
-//
-//    }
-
-//    public class QuerySpotifyArtistTask extends AsyncTask<String, Void, ArrayList<ArtistInfo>>{
-//
-//        @Override
-//        protected ArrayList<ArtistInfo> doInBackground(String... artistName){
-//
-//            if(artistName.length == 0){
-//                return null;
-//            }
-//            SpotifyApi spotifyApi = new SpotifyApi();
-//            SpotifyService spotifyService = spotifyApi.getService();
-//            ArtistsPager artistSearchResults = spotifyService.searchArtists(artistName[0]);
-//            if (artistSearchResults != null && artistSearchResults.artists.items.size() > 0) {
-//                ArrayList<ArtistInfo> artistInfos = new ArrayList<>();
-//                for (int i = 0; i < artistSearchResults.artists.items.size(); i++) {
-//                    Artist artist = artistSearchResults.artists.items.get(i);
-//                    //function here for figuring out the right image to load
-//                    int imagePos = findProperImage(artist);
-//                    if (imagePos == -1) {
-//                        artistInfos.add(new ArtistInfo(artist.name, artist.id, "default"));
-//                    } else {
-//                        artistInfos.add(new ArtistInfo(artist.name, artist.id, artist.images
-//                                .get(imagePos).url));
-//                    }
-//                }
-//                return artistInfos;
-//            }
-//            return null;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(ArrayList<ArtistInfo> results){
-//            artistListAdapter.clear();
-//            if(results != null){
-//                artistListAdapter.addAll(results);
-//            }
-//            else{
-//                showToast(R.string.no_artists_result_text);
-//            }
-//        }
-//    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle){
@@ -198,25 +150,16 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
      * This method uses an AsyncTask to query the Spotify API for an artist name search
      * @param searchString the artist to search for
      */
-//    public void fetchArtistResults(String searchString){
-//        //QuerySpotifyArtistTask searchArtistTask = new QuerySpotifyArtistTask();
-//        //searchArtistTask.execute(searchString);
-//    }
+    public void fetchArtistResults(String searchString){
+        FetchArtistTask queryArtistTask = new FetchArtistTask(getActivity());
+        queryArtistTask.execute(searchString);
+    }
 
-
-
-    /**
-     * this method check whether or not there is connection to the internet
-     * @return true if there is connection and false if there is not
-     */
-    public boolean hasConnection(){
-        ConnectivityManager cm = (ConnectivityManager) getActivity().getSystemService(
-                Context.CONNECTIVITY_SERVICE);
-
-
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        return hasConnection;
+    public void fetchTracksResults(String searchString[]){
+        FetchTopTrackTask queryTopTrackTask = new FetchTopTrackTask(getActivity());
+        queryTopTrackTask.execute(searchString);
+//        QuerySpotifyTopTracksTask searchTopTrackTask = new QuerySpotifyTopTracksTask();
+//        searchTopTrackTask.execute(searchString);
     }
 
     /**
@@ -229,12 +172,5 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         }
         noResultsToast = Toast.makeText(getActivity(), toastMsg, Toast.LENGTH_SHORT);
         noResultsToast.show();
-    }
-
-    @Override
-    public void onStart(){
-        super.onStart();
-        FetchArtistTask queryTask = new FetchArtistTask(getActivity());
-        queryTask.execute("Coldplay");
     }
 }
