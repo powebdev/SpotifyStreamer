@@ -24,12 +24,26 @@
         android:text="@string/dummy_text"
         />
 
-    <ImageView
+    <RelativeLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/frag_player_album_imageview"
-        android:src="@drawable/artist"
-        />
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/frag_player_album_imageview"
+            android:src="@drawable/artist"
+            />
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/frag_player_loading_wheel"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_centerInParent="true"
+            android:visibility="visible"
+            />
+    </RelativeLayout>
 
     <TextView
         android:layout_width="wrap_content"
@@ -38,11 +52,36 @@
         android:text="@string/dummy_text"
         />
 
-    <SeekBar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/frag_player_track_seekbar"
-        />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <SeekBar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/frag_player_track_seekbar"
+            android:layout_alignParentTop="true"
+            android:layout_centerInParent="true"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/frag_player_current_textview"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@id/frag_player_track_seekbar"
+            android:text="00:00"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/frag_player_duration_textview"
+            android:layout_alignParentRight="true"
+            android:layout_below="@id/frag_player_track_seekbar"
+            android:text="00:00"
+            />
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -64,7 +103,7 @@
             android:layout_weight="1"
             android:layout_margin="@dimen/activity_vertical_margin"
             android:id="@+id/frag_player_play_pause_button"
-            android:src="@android:drawable/ic_media_pause"
+            android:src="@android:drawable/ic_media_play"
             />
 
         <ImageButton

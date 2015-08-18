@@ -80,7 +80,6 @@ public class TopTracksActivityFragment extends Fragment implements LoaderManager
 //                        int inx_track_table_id = cursor.getColumnIndex(MusicContract.TopTrackEntry._ID);
 //                        int _trackId = cursor.getInt(inx_track_table_id);
 //                        Uri trackUri = ContentUris.withAppendedId(MusicContract.TopTrackEntry.CONTENT_URI, _trackId);
-//                        playerInfoStrings.putString("EXTRA_TRACK_URI", trackUri.toString());
                         playerInfoStrings.putInt("EXTRA_TRACK_POSITION", position);
                         playerIntent.putExtras(playerInfoStrings);
                         startActivity(playerIntent);

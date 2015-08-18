@@ -40,4 +40,11 @@ public class HelperFunction {
         boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         return hasConnection;
     }
+
+    public static String timeFormatter(int mSec){
+        long second = (mSec / 1000) % 60;
+        long minute = mSec / (1000 *60);
+        String time = String.format("%d:%02d", minute, second);
+        return time;
+    }
 }
