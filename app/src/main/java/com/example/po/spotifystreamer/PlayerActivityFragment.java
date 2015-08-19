@@ -1,16 +1,13 @@
 package com.example.po.spotifystreamer;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,39 +18,33 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.po.spotifystreamer.data.MusicContract;
-
-import java.io.IOException;
-//http://stackoverflow.com/questions/26266774/dealing-with-androids-mediaplayer-while-rotating-screen-pressing-home-button-o
+import com.example.po.spotifystreamer.service.PlayerService;
 //import android.content.Loader;
 
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBarChangeListener,View.OnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBarChangeListener,View.OnClickListener{
     private static final String LOG_TAG = PlayerActivityFragment.class.getSimpleName();
-    private static final int TRACK_LOADER = 2;
-    private static final boolean PLAYER_STATE_PLAYING = true;
-    private static final boolean PLAYER_STATE_PAUSED = false;
 
-    private MediaPlayer mMediaPlayer = new MediaPlayer();
+    private PlayerService mPlayerService;
+    private boolean mBound = false;
+
     private Handler timeUpdateHandler = new Handler();
-    private boolean mPlayerPlaying;
+
     private TextView mArtistNameView;
     private TextView mAlbumNameView;
     private ImageView mAlbumArtView;
     private TextView mTrackNameView;
+    private TextView mCurrentPositionView;
+    private TextView mDurationView;
+
     private SeekBar mTrackSeekBar;
     private ImageButton mPreviousTrackButton;
     private ImageButton mNextTrackButton;
     private ImageButton mPausePlayButton;
     private ProgressBar mLoadingWheel;
-    private TextView mCurrentPositionView;
-    private TextView mDurationView;
 
-    private String mTrackUri;
-    private int mTrackNumber;
-    private int mTrackDuration;
     private int mTrackCurrentPosition;
 
     public PlayerActivityFragment() {
@@ -61,14 +52,24 @@ public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBa
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState){
-        getLoaderManager().initLoader(TRACK_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+
     }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        Intent intent = new Intent(getActivity(), PlayerService.class);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mPlayerPlaying = PLAYER_STATE_PAUSED;
         View rootView = inflater.inflate(R.layout.fragment_player, container, false);
+
+
         mArtistNameView = (TextView) rootView.findViewById(R.id.frag_player_artist_textview);
         mAlbumNameView = (TextView) rootView.findViewById(R.id.frag_player_album_textview);
         mAlbumArtView = (ImageView) rootView.findViewById(R.id.frag_player_album_imageview);
@@ -76,25 +77,19 @@ public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBa
         mLoadingWheel = (ProgressBar) rootView.findViewById(R.id.frag_player_loading_wheel);
         mCurrentPositionView = (TextView) rootView.findViewById(R.id.frag_player_current_textview);
         mDurationView = (TextView) rootView.findViewById(R.id.frag_player_duration_textview);
-
         mTrackSeekBar = (SeekBar) rootView.findViewById(R.id.frag_player_track_seekbar);
-        mTrackSeekBar.setOnSeekBarChangeListener(this);
-
         mPreviousTrackButton = (ImageButton) rootView.findViewById(R.id.frag_player_previous_button);
-        mPreviousTrackButton.setOnClickListener(this);
-
         mNextTrackButton = (ImageButton) rootView.findViewById(R.id.frag_player_next_button);
-        mNextTrackButton.setOnClickListener(this);
-
         mPausePlayButton = (ImageButton) rootView.findViewById(R.id.frag_player_play_pause_button);
+
+        mTrackSeekBar.setOnSeekBarChangeListener(this);
+        mPreviousTrackButton.setOnClickListener(this);
+        mNextTrackButton.setOnClickListener(this);
         mPausePlayButton.setOnClickListener(this);
 
+        mPausePlayButton.setEnabled(false);
+        mLoadingWheel.setVisibility(View.VISIBLE);
 
-        Intent intent = getActivity().getIntent();
-        if(intent != null) {
-            Bundle extrasInfo = intent.getExtras();
-            mTrackNumber = extrasInfo.getInt("EXTRA_TRACK_POSITION");
-        }
         return rootView;
     }
 
@@ -102,135 +97,55 @@ public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBa
     public void onClick(View v) {
         switch(v.getId()){
             case R.id.frag_player_previous_button:
-                moveToPreviousTrack();
+                if(mBound){
+                    if(mPlayerService.previousTrack()){
+                        mPausePlayButton.setEnabled(false);
+                        mLoadingWheel.setVisibility(View.VISIBLE);
+                        updateUi();
+                        mPausePlayButton.setEnabled(true);
+                        mLoadingWheel.setVisibility(View.INVISIBLE);
+                    }
+                }
                 break;
             case R.id.frag_player_next_button:
-                moveToNextTrack();
+                if(mBound){
+                    if(mPlayerService.nextTrack()){
+                        mPausePlayButton.setEnabled(false);
+                        mLoadingWheel.setVisibility(View.VISIBLE);
+                        updateUi();
+                        mPausePlayButton.setEnabled(true);
+                        mLoadingWheel.setVisibility(View.INVISIBLE);
+                    }
+                }
                 break;
             case R.id.frag_player_play_pause_button:
-                if(!mMediaPlayer.isPlaying()){
-                    playTrack();
-                }
-                else if(mMediaPlayer.isPlaying()){
+                if(mPlayerService.getPlayerState()){
                     pauseTrack();
+                }else{
+                    playTrack();
                 }
                 break;
         }
-    }
-    @Override
-    public void onPause(){
-        super.onPause();
-        mMediaPlayer.stop();
-    }
-
-    public void moveToNextTrack(){
-        mTrackNumber++;
-        mMediaPlayer.stop();
-        getLoaderManager().restartLoader(TRACK_LOADER, null, this);
-    }
-
-    public void moveToPreviousTrack(){
-        mTrackNumber--;
-        mMediaPlayer.stop();
-        getLoaderManager().restartLoader(TRACK_LOADER, null, this);
     }
 
     public void playTrack(){
-        mPlayerPlaying = PLAYER_STATE_PLAYING;
+        timeUpdateHandler.postDelayed(UpdateSongTime, 100);
         mPausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
-        mMediaPlayer.start();
+        mPlayerService.playTrack();
     }
 
     public void pauseTrack(){
-        mPlayerPlaying = PLAYER_STATE_PAUSED;
         mPausePlayButton.setImageResource(android.R.drawable.ic_media_play);
-        mMediaPlayer.pause();
-    }
-
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
-        Uri topTrackUri = MusicContract.TopTrackEntry.CONTENT_URI;
-
-        return new CursorLoader(getActivity(),
-                topTrackUri,
-                null,
-                null,
-                null,
-                sortOrder);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        if(mTrackNumber < 0){
-            mTrackNumber = 0;
-        }
-        if(mTrackNumber > data.getCount() - 1){
-            mTrackNumber = data.getCount() - 1;
-        }
-
-        data.moveToPosition(mTrackNumber);
-        int inx_artist_name_col = data.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY);
-        int inx_album_name_col = data.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY);
-        int inx_track_name_col = data.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_NAME);
-        int inx_track_url_col = data.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL);
-
-        String artistName = data.getString(inx_artist_name_col);
-        String albumName = data.getString(inx_album_name_col);
-        String trackName = data.getString(inx_track_name_col);
-        mTrackUri = data.getString(inx_track_url_col);
-
-        mArtistNameView.setText(artistName);
-        mAlbumNameView.setText(albumName);
-        mTrackNameView.setText(trackName);
-
-        mMediaPlayer.reset();
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-            Log.d(LOG_TAG, "url is " + mTrackUri);
-            mMediaPlayer.setDataSource(mTrackUri);
-            mPausePlayButton.setEnabled(false);
-            mLoadingWheel.setVisibility(View.VISIBLE);
-        }
-        catch(IllegalArgumentException e){
-            e.printStackTrace();
-        }
-        catch(SecurityException e){
-            e.printStackTrace();
-        }
-        catch(IllegalStateException e){
-            e.printStackTrace();
-        }
-        catch(IOException e){
-            e.printStackTrace();
-        }
-        mMediaPlayer.prepareAsync();
-
-        mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mTrackDuration = mMediaPlayer.getDuration();
-                mTrackSeekBar.setMax(mTrackDuration);
-                mTrackCurrentPosition = mMediaPlayer.getCurrentPosition();
-                mPausePlayButton.setEnabled(true);
-                mLoadingWheel.setVisibility(View.INVISIBLE);
-                mDurationView.setText(HelperFunction.timeFormatter(mTrackDuration));
-                mCurrentPositionView.setText(HelperFunction.timeFormatter(mTrackCurrentPosition));
-                mTrackSeekBar.setProgress(mTrackCurrentPosition);
-                playTrack();
-            }
-        });
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
+        mPlayerService.pauseTrack();
     }
 
     private Runnable UpdateSongTime = new Runnable() {
         @Override
         public void run() {
-            mTrackCurrentPosition = mMediaPlayer.getCurrentPosition();
+            mTrackCurrentPosition = mPlayerService.getCurrentPosition();
+            mCurrentPositionView.setText(HelperFunction.timeFormatter(mTrackCurrentPosition));
+            mTrackSeekBar.setProgress(mTrackCurrentPosition);
+            timeUpdateHandler.postDelayed(this, 40);
 
         }
     };
@@ -249,7 +164,39 @@ public class PlayerActivityFragment extends Fragment implements SeekBar.OnSeekBa
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
 
-        mMediaPlayer.seekTo(mTrackCurrentPosition);
+        mPlayerService.seekToPosition(mTrackCurrentPosition);
+    }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(LOG_TAG, "in onServiceConnected");
+            PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder) service;
+            mPlayerService = binder.getService();
+            mBound = true;
+            updateUi();
+            mPausePlayButton.setEnabled(true);
+            mLoadingWheel.setVisibility(View.INVISIBLE);
+            mPlayerService.playTrack();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mBound = false;
+
+        }
+    };
+
+    private void updateUi(){
+        Bundle trackInfo = mPlayerService.getTrackInfo();
+        mArtistNameView.setText(trackInfo.getString("TRACK_INFO_ARTIST"));
+        mAlbumNameView.setText(trackInfo.getString("TRACK_INFO_ALBUM"));
+        mTrackNameView.setText(trackInfo.getString("TRACK_INFO_NAME"));
+        mDurationView.setText(HelperFunction.timeFormatter(trackInfo.getInt("TRACK_INFO_DURATION")));
     }
 }
+
+//        catch(IllegalArgumentException e){
+//        catch(SecurityException e){
+//        catch(IllegalStateException e){
+//        catch(IOException e){

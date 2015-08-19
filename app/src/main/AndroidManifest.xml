@@ -36,6 +36,8 @@
         <provider
             android:authorities="com.example.po.spotifystreamer"
             android:name=".data.MusicProvider" />
+        <service
+            android:name=".service.PlayerService"/>
     </application>
 
 </manifest>

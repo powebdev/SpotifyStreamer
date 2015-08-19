@@ -16,6 +16,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
+import com.example.po.spotifystreamer.service.PlayerService;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -74,6 +75,7 @@ public class TopTracksActivityFragment extends Fragment implements LoaderManager
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(HelperFunction.hasConnection(getActivity())){
                     Intent playerIntent = new Intent(getActivity(), PlayerActivity.class);
+                    Intent serviceIntent = new Intent(getActivity(), PlayerService.class);
                     Bundle playerInfoStrings = new Bundle();
                     Cursor cursor = (Cursor) parent.getItemAtPosition(position);
                     if(cursor != null){
@@ -82,6 +84,9 @@ public class TopTracksActivityFragment extends Fragment implements LoaderManager
 //                        Uri trackUri = ContentUris.withAppendedId(MusicContract.TopTrackEntry.CONTENT_URI, _trackId);
                         playerInfoStrings.putInt("EXTRA_TRACK_POSITION", position);
                         playerIntent.putExtras(playerInfoStrings);
+                        serviceIntent.putExtras(playerInfoStrings);
+
+                        getActivity().startService(serviceIntent);
                         startActivity(playerIntent);
                     }
                 }
