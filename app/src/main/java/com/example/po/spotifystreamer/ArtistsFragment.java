@@ -1,6 +1,6 @@
 package com.example.po.spotifystreamer;
 
-import android.content.Intent;
+import android.app.Activity;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,24 +25,35 @@ import com.example.po.spotifystreamer.data.MusicContract;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String LOG_TAG =ArtistsFragment.class.getSimpleName();
 
     private static final int ARTIST_LOADER_ID = 0;
     private ArtistAdapter mArtistAdapter;
     public Toast noResultsToast;
 
-    public MainActivityFragment() {
+    public interface Callback{
+        void onArtistSelected(String artistName);
+    }
+    public ArtistsFragment() {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        getLoaderManager().initLoader(ARTIST_LOADER_ID, null, this);
-        super.onActivityCreated(savedInstanceState);
+    public void onAttach(Activity activity) {
+        Log.d(LOG_TAG, "App in onAttach");
+        super.onAttach(activity);
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCreate");
+        super.onCreate(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCV");
 
         //Create or reload the adapter to convert the array to views
 //        if(savedInstanceState != null){
@@ -56,11 +68,12 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
 //            artistListAdapter = new ArtistListAdapter(getActivity(), new ArrayList<ArtistInfo>());
 //        }
 
-        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_POPULARITY + " DESC";
-        Cursor cur = getActivity().getContentResolver().query(MusicContract.ArtistEntry.CONTENT_URI, null, null, null, sortOrder);
-        mArtistAdapter = new ArtistAdapter(getActivity(), cur, 0);
+//        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_POPULARITY + " DESC";
+//        Cursor cur = getActivity().getContentResolver().query(MusicContract.ArtistEntry.CONTENT_URI, null, null, null, sortOrder);
+//        mArtistAdapter = new ArtistAdapter(getActivity(), cur, 0);
+        mArtistAdapter = new ArtistAdapter(getActivity(), null, 0);
 
-        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_artist, container, false);
         EditText searchText = (EditText) rootView.findViewById(R.id.search_artist);
         searchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -72,13 +85,13 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                         if(!searchStr.isEmpty()){
                             fetchArtistResults(searchStr);
                             handled = true;
-                            return handled;
+//                            return handled;
                         }
                     }
                     else{
                         showToast(R.string.no_network_connection_text);
                         handled = false;
-                        return handled;
+//                        return handled;
                     }
 
                 }
@@ -94,22 +107,19 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 if(HelperFunction.hasConnection(getActivity())){
-                    Intent topTrackIntent = new Intent(getActivity(), TopTracksActivity.class);
-                    Bundle infoStrings = new Bundle();
+
                     Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                     if(cursor != null){
                         int inx_artist_id = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_SPOTIFY_ID);
                         String artistId = cursor.getString(inx_artist_id);
-
                         int inx_artist_name = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_NAME);
                         String artistName = cursor.getString(inx_artist_name);
                         String[] artistInfo = {artistId, artistName};
-
                         fetchTracksResults(artistInfo);
 
-                        infoStrings.putString("EXTRA_ARTIST_NAME", artistName);
-                        topTrackIntent.putExtras(infoStrings);
-                        startActivity(topTrackIntent);
+                        ((Callback) getActivity()).onArtistSelected(artistName);
+
+
                     }
 
 
@@ -121,6 +131,25 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
             }
         });
         return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        Log.d(LOG_TAG, "App in onAC");
+        getLoaderManager().initLoader(ARTIST_LOADER_ID, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(LOG_TAG, "App in onStart");
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(LOG_TAG, "App in onResume");
+        super.onResume();
     }
 
     @Override

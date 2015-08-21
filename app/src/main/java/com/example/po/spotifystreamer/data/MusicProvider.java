@@ -6,14 +6,12 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
-/**
- * Created by Po on 8/2/2015.
- */
 public class MusicProvider extends ContentProvider{
 
     private static final UriMatcher sUriMatcher = buildUriMatcher();
-    private MusicDbHelper mMusicDbOpenHelper;
+    private MusicDBHelper mMusicDbOpenHelper;
 
     static final int ARTISTS = 100;
     static final int SINGLE_ARTIST = 101;
@@ -23,7 +21,7 @@ public class MusicProvider extends ContentProvider{
     @Override
     public boolean onCreate(){
 
-        mMusicDbOpenHelper = new MusicDbHelper(getContext());
+        mMusicDbOpenHelper = new MusicDBHelper(getContext());
         return true;
     }
 
@@ -144,7 +142,7 @@ public class MusicProvider extends ContentProvider{
     }
 
     @Override
-    public int bulkInsert(Uri uri, ContentValues[] values) {
+    public int bulkInsert(Uri uri, @NonNull ContentValues[] values) {
         final SQLiteDatabase db = mMusicDbOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         int returnCount;

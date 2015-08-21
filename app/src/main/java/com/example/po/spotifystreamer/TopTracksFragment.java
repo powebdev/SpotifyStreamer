@@ -1,5 +1,6 @@
 package com.example.po.spotifystreamer;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -8,6 +9,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,26 +23,37 @@ import com.example.po.spotifystreamer.service.PlayerService;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class TopTracksActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
-
+public class TopTracksFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+    private static final String LOG_TAG = TopTracksFragment.class.getSimpleName();
     private static final int TOP_TRACK_LOADER_ID = 1;
-    private  TopTrackAdapter mTopTrackAdapter;
+    private TopTrackAdapter mTopTrackAdapter;
     private String artistId;
     private Toast noResultsToast;
 
-    public TopTracksActivityFragment() {
+    public TopTracksFragment() {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        getLoaderManager().initLoader(TOP_TRACK_LOADER_ID, null, this);
-        super.onActivityCreated(savedInstanceState);
+    public void onAttach(Activity activity) {
+        Log.d(LOG_TAG, "App in onAttach");
+        super.onAttach(activity);
     }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCreate");
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCV");
 
         //Create or reload the adapter to convert the array to views
+
+
+
 
         String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
         Cursor cur = getActivity().getContentResolver().query(MusicContract.TopTrackEntry.CONTENT_URI, null, null, null, sortOrder);
@@ -76,17 +89,17 @@ public class TopTracksActivityFragment extends Fragment implements LoaderManager
                 if(HelperFunction.hasConnection(getActivity())){
                     Intent playerIntent = new Intent(getActivity(), PlayerActivity.class);
                     Intent serviceIntent = new Intent(getActivity(), PlayerService.class);
-                    Bundle playerInfoStrings = new Bundle();
+//                    Bundle playerInfoStrings = new Bundle();
                     Cursor cursor = (Cursor) parent.getItemAtPosition(position);
                     if(cursor != null){
 //                        int inx_track_table_id = cursor.getColumnIndex(MusicContract.TopTrackEntry._ID);
 //                        int _trackId = cursor.getInt(inx_track_table_id);
 //                        Uri trackUri = ContentUris.withAppendedId(MusicContract.TopTrackEntry.CONTENT_URI, _trackId);
-                        playerInfoStrings.putInt("EXTRA_TRACK_POSITION", position);
-                        playerIntent.putExtras(playerInfoStrings);
-                        serviceIntent.putExtras(playerInfoStrings);
+//                        playerInfoStrings.putInt("EXTRA_TRACK_POSITION", position);
+                        playerIntent.putExtra("EXTRA_TRACK_POSITION", position);
+//                        serviceIntent.putExtras(playerInfoStrings);
 
-                        getActivity().startService(serviceIntent);
+//                        getActivity().startService(serviceIntent);
                         startActivity(playerIntent);
                     }
                 }
@@ -97,7 +110,27 @@ public class TopTracksActivityFragment extends Fragment implements LoaderManager
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        Log.d(LOG_TAG, "App in onAC");
+        getLoaderManager().initLoader(TOP_TRACK_LOADER_ID, null, this);
+        super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        Log.d(LOG_TAG, "App in onStart");
+        super.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        Log.d(LOG_TAG, "App in onResume");
+        super.onResume();
+    }
+
+    @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle){
+
         String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
         Uri topTrackUri = MusicContract.TopTrackEntry.CONTENT_URI;
 

@@ -3,22 +3,25 @@ package com.example.po.spotifystreamer.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * Created by Po on 8/2/2015.
+ * Manages a local database for spotifyAPI search results.
  */
-public class MusicDbHelper extends SQLiteOpenHelper {
+public class MusicDBHelper extends SQLiteOpenHelper {
+    private static final String LOG_TAG =MusicDBHelper.class.getSimpleName();
 
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "SpotifyStreamer.db";
 
-    public MusicDbHelper(Context context){
+    public MusicDBHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase musicDatabase){
-
+        Log.d(LOG_TAG, "DB onCreate");
         final String SQL_CREATE_ARTIST_TABLE =
                 "CREATE TABLE " + MusicContract.ArtistEntry.TABLE_NAME + " (" +
                         MusicContract.ArtistEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +

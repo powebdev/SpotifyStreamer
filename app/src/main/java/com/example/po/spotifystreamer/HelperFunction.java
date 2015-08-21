@@ -9,8 +9,10 @@ import kaaes.spotify.webapi.android.models.Artist;
 
 /**
  * Created by Po on 8/13/2015.
+ * Collection of various methods used in the app.
  */
 public class HelperFunction {
+    public static boolean sPlayerServiceStarted = false;
 
     public static int findProperImage(Artist artist) {
         int foundImage;
@@ -37,14 +39,14 @@ public class HelperFunction {
 
 
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        boolean hasConnection = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        return hasConnection;
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+//        return hasConnection;
     }
 
     public static String timeFormatter(int mSec){
         long second = (mSec / 1000) % 60;
         long minute = mSec / (1000 *60);
-        String time = String.format("%d:%02d", minute, second);
-        return time;
+        return String.format("%d:%02d", minute, second);
+//        return time;
     }
 }

@@ -1,17 +1,43 @@
 package com.example.po.spotifystreamer;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ArtistsFragment.Callback{
+    private static final String LOG_TAG =MainActivity.class.getSimpleName();
+    private boolean mTwoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if(findViewById(R.id.top_track_fragment_container) != null){
+            Log.d(LOG_TAG, "In two pane");
+            mTwoPane = true;
+        }else{
+            Log.d(LOG_TAG, "In one pane");
+            mTwoPane = false;
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d(LOG_TAG, "App in onStart");
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.d(LOG_TAG, "App in onResume");
+
+        super.onResume();
     }
 
     @Override
@@ -34,5 +60,23 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onArtistSelected(String artistName) {
+        if(mTwoPane){
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setSubtitle(artistName);
+            }
+
+        }else{
+            Intent topTrackIntent = new Intent(this, TopTracksActivity.class);
+            Bundle infoStrings = new Bundle();
+            infoStrings.putString("EXTRA_ARTIST_NAME", artistName);
+            topTrackIntent.putExtras(infoStrings);
+            startActivity(topTrackIntent);
+
+        }
     }
 }
