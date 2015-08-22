@@ -2,15 +2,54 @@ package com.example.po.spotifystreamer;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class PlayerActivity extends AppCompatActivity {
+    private static final String LOG_TAG =PlayerActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "App in onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+
+        if(savedInstanceState == null){
+            PlayerFragment pf = new PlayerFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.player_fragment_container, pf).commit();
+        }
+
+    }
+
+    @Override
+    protected void onStart() {
+        Log.d(LOG_TAG, "App in onStart");
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.d(LOG_TAG, "App in onResume");
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        Log.d(LOG_TAG, "App in onPause");
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(LOG_TAG, "App in onStop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(LOG_TAG, "App in onDestroy");
+        super.onDestroy();
     }
 
 

@@ -2,6 +2,7 @@ package com.example.po.spotifystreamer;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -9,8 +10,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends AppCompatActivity implements ArtistsFragment.Callback{
+public class MainActivity extends AppCompatActivity implements ArtistsFragment.Callback, TopTracksFragment.Callback{
     private static final String LOG_TAG =MainActivity.class.getSimpleName();
+    private static final String TOPTRACKFRAG_TAG = "TTFTAG";
     private boolean mTwoPane;
 
     @Override
@@ -70,13 +72,25 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
                 actionBar.setSubtitle(artistName);
             }
 
+            TopTracksFragment ttf = new TopTracksFragment();
+            getSupportFragmentManager().beginTransaction().replace(R.id.top_track_fragment_container, ttf, TOPTRACKFRAG_TAG).commit();
+
         }else{
             Intent topTrackIntent = new Intent(this, TopTracksActivity.class);
             Bundle infoStrings = new Bundle();
             infoStrings.putString("EXTRA_ARTIST_NAME", artistName);
             topTrackIntent.putExtras(infoStrings);
             startActivity(topTrackIntent);
-
         }
+    }
+
+    @Override
+    public void onTopTrackSelected(int trackPosition) {
+        FragmentManager fm = getSupportFragmentManager();
+        PlayerFragment pf = new PlayerFragment();
+        Bundle arguments = new Bundle();
+        arguments.putInt("ARGS_TRACK_POSITION", trackPosition);
+        pf.setArguments(arguments);
+        pf.show(fm, "playerDialog");
     }
 }

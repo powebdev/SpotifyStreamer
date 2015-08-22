@@ -8,8 +8,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class TopTracksActivity extends AppCompatActivity {
-
+public class TopTracksActivity extends AppCompatActivity implements TopTracksFragment.Callback{
+    private static final String LOG_TAG = TopTracksActivity.class.getSimpleName();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -21,8 +21,13 @@ public class TopTracksActivity extends AppCompatActivity {
         if(intent != null && intent.hasExtra("EXTRA_ARTIST_NAME")){
             String artistName = intent.getExtras().getString("EXTRA_ARTIST_NAME");
             ActionBar actionBar = getSupportActionBar();
-            actionBar.setSubtitle(artistName);
+            if(actionBar != null){
+                actionBar.setSubtitle(artistName);
+            }
         }
+
+        TopTracksFragment ttf = new TopTracksFragment();
+        getSupportFragmentManager().beginTransaction().replace(R.id.top_track_fragment_container, ttf).commit();
 
 
 
@@ -50,4 +55,22 @@ public class TopTracksActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onTopTrackSelected(int trackPosition) {
+//        FragmentManager fm = getSupportFragmentManager();
+//        PlayerFragment pf = new PlayerFragment();
+//        Bundle arguments = new Bundle();
+//        arguments.putInt("ARGS_TRACK_POSITION", trackPosition);
+//        pf.setArguments(arguments);
+//        FragmentTransaction ft = fm.beginTransaction();
+//
+//        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+//        ft.replace(R.id.top_track_fragment_container, pf).commit();
+        Intent playerIntent = new Intent(this, PlayerActivity.class);
+        playerIntent.putExtra("EXTRA_TRACK_POSITION", trackPosition);
+        startActivity(playerIntent);
+    }
+
+
 }

@@ -1,7 +1,6 @@
 package com.example.po.spotifystreamer;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -18,7 +17,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
-import com.example.po.spotifystreamer.service.PlayerService;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -29,6 +27,11 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
     private TopTrackAdapter mTopTrackAdapter;
     private String artistId;
     private Toast noResultsToast;
+
+    public interface Callback{
+        void onTopTrackSelected(int trackPosition);
+    }
+
 
     public TopTracksFragment() {
     }
@@ -49,11 +52,6 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(LOG_TAG, "App in onCV");
-
-        //Create or reload the adapter to convert the array to views
-
-
-
 
         String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
         Cursor cur = getActivity().getContentResolver().query(MusicContract.TopTrackEntry.CONTENT_URI, null, null, null, sortOrder);
@@ -87,21 +85,8 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(HelperFunction.hasConnection(getActivity())){
-                    Intent playerIntent = new Intent(getActivity(), PlayerActivity.class);
-                    Intent serviceIntent = new Intent(getActivity(), PlayerService.class);
-//                    Bundle playerInfoStrings = new Bundle();
-                    Cursor cursor = (Cursor) parent.getItemAtPosition(position);
-                    if(cursor != null){
-//                        int inx_track_table_id = cursor.getColumnIndex(MusicContract.TopTrackEntry._ID);
-//                        int _trackId = cursor.getInt(inx_track_table_id);
-//                        Uri trackUri = ContentUris.withAppendedId(MusicContract.TopTrackEntry.CONTENT_URI, _trackId);
-//                        playerInfoStrings.putInt("EXTRA_TRACK_POSITION", position);
-                        playerIntent.putExtra("EXTRA_TRACK_POSITION", position);
-//                        serviceIntent.putExtras(playerInfoStrings);
+                    ((Callback) getActivity()).onTopTrackSelected(position);
 
-//                        getActivity().startService(serviceIntent);
-                        startActivity(playerIntent);
-                    }
                 }
             }
         });

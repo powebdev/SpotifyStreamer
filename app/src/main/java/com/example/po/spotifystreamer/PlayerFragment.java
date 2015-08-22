@@ -1,5 +1,6 @@
 package com.example.po.spotifystreamer;
 
+import android.support.v4.app.DialogFragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +9,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +26,7 @@ import com.example.po.spotifystreamer.service.PlayerService;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class PlayerFragment extends Fragment implements View.OnClickListener, SeekBar.OnSeekBarChangeListener{
+public class PlayerFragment extends DialogFragment implements View.OnClickListener, SeekBar.OnSeekBarChangeListener{
     private static final String LOG_TAG = PlayerFragment.class.getSimpleName();
 
     private boolean seekBarTouched = false;
@@ -68,6 +68,7 @@ public class PlayerFragment extends Fragment implements View.OnClickListener, Se
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(LOG_TAG, "onCV");
+
         View rootView = inflater.inflate(R.layout.fragment_player, container, false);
 
         mArtistNameView = (TextView) rootView.findViewById(R.id.frag_player_artist_textview);
@@ -89,9 +90,17 @@ public class PlayerFragment extends Fragment implements View.OnClickListener, Se
             mPausePlayButton.setEnabled(false);
             mPausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
             Log.d(LOG_TAG, "savedInstanceState is null");
+            int trackNumber;
+            if(getResources().getBoolean(R.bool.twopanes_layout)){
+                Bundle argsBundle = getArguments();
+                trackNumber = argsBundle.getInt("ARGS_TRACK_POSITION", 0);
+            }else{
+                Intent intent = getActivity().getIntent();
+                trackNumber = intent.getIntExtra("EXTRA_TRACK_POSITION", 0);
+            }
+//            Bundle argsBundle = getArguments();
+//            trackNumber = argsBundle.getInt("ARGS_TRACK_POSITION", 0);
 
-            Intent intent = getActivity().getIntent();
-            int trackNumber = intent.getIntExtra("EXTRA_TRACK_POSITION", 0);
             mSongList.moveToPosition(trackNumber);
             int idx_track_url = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL);
 
@@ -100,7 +109,7 @@ public class PlayerFragment extends Fragment implements View.OnClickListener, Se
             getActivity().startService(startServiceIntent);
 
 
-        }else{
+        } else{
             Log.d(LOG_TAG, "savedInstanceState is not null");
             mSongList.moveToPosition(savedInstanceState.getInt("SAVED_TRACK_POSITION"));
             mTrackDuration = savedInstanceState.getInt("SAVED_TRACK_DURATION");

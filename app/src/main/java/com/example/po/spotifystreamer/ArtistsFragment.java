@@ -54,23 +54,6 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         Log.d(LOG_TAG, "App in onCV");
-
-        //Create or reload the adapter to convert the array to views
-//        if(savedInstanceState != null){
-//            ArtistInfo[] savedStateValues = (ArtistInfo[]) savedInstanceState
-//                    .getParcelableArray("artistKey");
-//            if(savedStateValues != null){
-//                artistListAdapter = new ArtistListAdapter(getActivity(),
-//                        new ArrayList<ArtistInfo>(Arrays.asList(savedStateValues)));
-//            }
-//        }
-//        else{
-//            artistListAdapter = new ArtistListAdapter(getActivity(), new ArrayList<ArtistInfo>());
-//        }
-
-//        String sortOrder = MusicContract.ArtistEntry.COLUMN_ARTIST_POPULARITY + " DESC";
-//        Cursor cur = getActivity().getContentResolver().query(MusicContract.ArtistEntry.CONTENT_URI, null, null, null, sortOrder);
-//        mArtistAdapter = new ArtistAdapter(getActivity(), cur, 0);
         mArtistAdapter = new ArtistAdapter(getActivity(), null, 0);
 
         View rootView = inflater.inflate(R.layout.fragment_artist, container, false);
@@ -85,13 +68,11 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
                         if(!searchStr.isEmpty()){
                             fetchArtistResults(searchStr);
                             handled = true;
-//                            return handled;
                         }
                     }
                     else{
                         showToast(R.string.no_network_connection_text);
                         handled = false;
-//                        return handled;
                     }
 
                 }
@@ -118,11 +99,7 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
                         fetchTracksResults(artistInfo);
 
                         ((Callback) getActivity()).onArtistSelected(artistName);
-
-
                     }
-
-
                 }
                 else{
                     showToast(R.string.no_network_connection_text);
