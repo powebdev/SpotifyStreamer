@@ -17,7 +17,7 @@ import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 
-public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
+public class FetchTopTrackTask extends AsyncTask<String, Void, Boolean> {
     private final String LOG_TAG = FetchTopTrackTask.class.getSimpleName();
     private final Context mContext;
 
@@ -26,20 +26,17 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
     }
 
     @Override
-    protected Void doInBackground(String... artistInfo) {
-        if (artistInfo.length == 0) {
-            return null;
-        }
+    protected Boolean doInBackground(String... artistInfo) {
 
         SpotifyApi spotifyApi = new SpotifyApi();
         SpotifyService spotifyService = spotifyApi.getService();
         Map availableMarket = new HashMap();
         availableMarket.put("country", "US");
         Tracks topTracks = spotifyService.getArtistTopTrack(artistInfo[0], availableMarket);
+        mContext.getContentResolver().delete(MusicContract.TopTrackEntry.CONTENT_URI, null, null);
 
         if (topTracks != null && topTracks.tracks.size() > 0) {
             Vector<ContentValues> cVVector = new Vector<>(topTracks.tracks.size());
-
             for (int i = 0; i < topTracks.tracks.size(); i++) {
                 Track track = topTracks.tracks.get(i);
                 List<Image> imagesToSearch = track.album.images;
@@ -58,12 +55,14 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Void> {
                 if(cVVector.size() > 0){
                     ContentValues[] cvArray = new ContentValues[cVVector.size()];
                     cVVector.toArray(cvArray);
-                    mContext.getContentResolver().delete(MusicContract.TopTrackEntry.CONTENT_URI, null, null);
                     mContext.getContentResolver().bulkInsert(MusicContract.TopTrackEntry.CONTENT_URI, cvArray);
                 }
             }
+            return true;
+        }else{
+            return false;
         }
-        return null;
+
 
     }
 }

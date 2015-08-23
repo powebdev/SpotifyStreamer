@@ -22,6 +22,7 @@ public class MusicProvider extends ContentProvider{
     public boolean onCreate(){
 
         mMusicDbOpenHelper = new MusicDBHelper(getContext());
+
         return true;
     }
 

@@ -149,7 +149,6 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         stopSelf();
-
         super.onTaskRemoved(rootIntent);
     }
 

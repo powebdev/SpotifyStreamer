@@ -22,6 +22,9 @@ public class MusicDBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase musicDatabase){
         Log.d(LOG_TAG, "DB onCreate");
+        musicDatabase.execSQL("DROP TABLE IF EXISTS " + MusicContract.ArtistEntry.TABLE_NAME);
+        musicDatabase.execSQL("DROP TABLE IF EXISTS " + MusicContract.TopTrackEntry.TABLE_NAME);
+
         final String SQL_CREATE_ARTIST_TABLE =
                 "CREATE TABLE " + MusicContract.ArtistEntry.TABLE_NAME + " (" +
                         MusicContract.ArtistEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +

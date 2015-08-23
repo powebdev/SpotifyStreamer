@@ -3,6 +3,7 @@ package com.example.po.spotifystreamer;
 import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
@@ -15,7 +16,7 @@ import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
 
-public class FetchArtistTask extends AsyncTask<String, Void, Void> {
+public class FetchArtistTask extends AsyncTask<String, Void, Boolean> {
 
     private final String LOG_TAG = FetchArtistTask.class.getSimpleName();
     private final Context mContext;
@@ -27,14 +28,14 @@ public class FetchArtistTask extends AsyncTask<String, Void, Void> {
     private boolean DEBUG = true;
 
     @Override
-    protected Void doInBackground(String... artistName) {
+    protected Boolean doInBackground(String... artistName) {
 
-        if (artistName.length == 0) {
-            return null;
-        }
         SpotifyApi spotifyApi = new SpotifyApi();
         SpotifyService spotifyService = spotifyApi.getService();
         ArtistsPager artistSearchResults = spotifyService.searchArtists(artistName[0]);
+        Log.d(LOG_TAG, "search resutls is null: " + (artistSearchResults == null));
+        Log.d(LOG_TAG, "search resutls number is: " + artistSearchResults.artists.items.size());
+        mContext.getContentResolver().delete(MusicContract.ArtistEntry.CONTENT_URI, null, null);
 
         if (artistSearchResults != null && artistSearchResults.artists.items.size() > 0) {
             Vector<ContentValues> cVVector = new Vector<>(artistSearchResults.artists.items.size());
@@ -52,12 +53,14 @@ public class FetchArtistTask extends AsyncTask<String, Void, Void> {
                 if (cVVector.size() > 0) {
                     ContentValues[] cvArray = new ContentValues[cVVector.size()];
                     cVVector.toArray(cvArray);
-                    mContext.getContentResolver().delete(MusicContract.ArtistEntry.CONTENT_URI, null, null);
                     mContext.getContentResolver().bulkInsert(MusicContract.ArtistEntry.CONTENT_URI, cvArray);
                 }
             }
+            return true;
+        }else{
+            return false;
         }
-        return null;
+
     }
 
     /**

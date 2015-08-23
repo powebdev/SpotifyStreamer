@@ -87,10 +87,10 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                if(HelperFunction.hasConnection(getActivity())){
+                if (HelperFunction.hasConnection(getActivity())) {
 
                     Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                    if(cursor != null){
+                    if (cursor != null) {
                         int inx_artist_id = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_SPOTIFY_ID);
                         String artistId = cursor.getString(inx_artist_id);
                         int inx_artist_name = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_NAME);
@@ -100,8 +100,7 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
 
                         ((Callback) getActivity()).onArtistSelected(artistName);
                     }
-                }
-                else{
+                } else {
                     showToast(R.string.no_network_connection_text);
                 }
 
@@ -159,11 +158,25 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
     public void fetchArtistResults(String searchString){
         FetchArtistTask queryArtistTask = new FetchArtistTask(getActivity());
         queryArtistTask.execute(searchString);
+        try{
+            if(!queryArtistTask.get()){
+                showToast(R.string.no_artists_result_text);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void fetchTracksResults(String searchString[]){
         FetchTopTrackTask queryTopTrackTask = new FetchTopTrackTask(getActivity());
         queryTopTrackTask.execute(searchString);
+        try{
+            if(!queryTopTrackTask.get()){
+                showToast(R.string.no_tracks_result_text);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
 //        QuerySpotifyTopTracksTask searchTopTrackTask = new QuerySpotifyTopTracksTask();
 //        searchTopTrackTask.execute(searchString);
     }

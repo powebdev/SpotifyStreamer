@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(LOG_TAG, "App in onCreate");
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         if(findViewById(R.id.top_track_fragment_container) != null){
             Log.d(LOG_TAG, "In two pane");
@@ -26,6 +27,9 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
         }else{
             Log.d(LOG_TAG, "In one pane");
             mTwoPane = false;
+        }
+        if(savedInstanceState == null){
+
         }
     }
 
