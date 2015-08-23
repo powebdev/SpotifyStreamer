@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -14,6 +15,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.po.spotifystreamer.R;
@@ -297,39 +299,45 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     public void showNotification(boolean playingNotPaused){
-        mNotificationBuilder = new Notification.Builder(this)
-                .setContentTitle("Now Playing")
-                .setContentText(mTrackName);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String displayNotificationsKey = this.getString(R.string.pref_enable_notifications_key);
+        boolean displayNotifications = sharedPreferences.getBoolean(displayNotificationsKey, Boolean.parseBoolean(this.getString(R.string.pref_enable_notifications_default)));
+        if(displayNotifications){
+            mNotificationBuilder = new Notification.Builder(this)
+                    .setContentTitle("Now Playing")
+                    .setContentText(mTrackName);
 
-        if(playingNotPaused){
-            mNotificationBuilder
-                    .setSmallIcon(android.R.drawable.ic_media_play)
-                    .setOngoing(true)
-                    .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
-                    .addAction(android.R.drawable.ic_media_pause, "", mPendingPauseIntent)
-                    .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
-        }else{
-            mNotificationBuilder
-                    .setSmallIcon(android.R.drawable.ic_media_pause)
-                    .setOngoing(false)
-                    .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
-                    .addAction(android.R.drawable.ic_media_play, "", mPendingPlayIntent)
-                    .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
+            if(playingNotPaused){
+                mNotificationBuilder
+                        .setSmallIcon(android.R.drawable.ic_media_play)
+                        .setOngoing(true)
+                        .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
+                        .addAction(android.R.drawable.ic_media_pause, "", mPendingPauseIntent)
+                        .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
+            }else{
+                mNotificationBuilder
+                        .setSmallIcon(android.R.drawable.ic_media_pause)
+                        .setOngoing(false)
+                        .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
+                        .addAction(android.R.drawable.ic_media_play, "", mPendingPlayIntent)
+                        .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
+            }
+
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
+                Log.d(LOG_TAG, "Version is Jelly Bean MR1");
+                mNotificationBuilder.setShowWhen(false);
+            }
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                Log.d(LOG_TAG, "Version is Lollipop");
+                mNotificationBuilder
+                        .setVisibility(Notification.VISIBILITY_PUBLIC)
+                        .setStyle(new Notification.MediaStyle().setShowActionsInCompactView(allControls));
+            }
+
+            loadBitmap(mAlbumArtSmall);
+            mNotifyMgr.notify(R.id.notification_id, mNotificationBuilder.build());
         }
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
-            Log.d(LOG_TAG, "Version is Jelly Bean MR1");
-            mNotificationBuilder.setShowWhen(false);
-        }
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            Log.d(LOG_TAG, "Version is Lollipop");
-            mNotificationBuilder
-                    .setVisibility(Notification.VISIBILITY_PUBLIC)
-                    .setStyle(new Notification.MediaStyle().setShowActionsInCompactView(allControls));
-        }
-
-        loadBitmap(mAlbumArtSmall);
-        mNotifyMgr.notify(R.id.notification_id, mNotificationBuilder.build());
     }
 
 }

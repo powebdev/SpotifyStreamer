@@ -2,7 +2,9 @@ package com.example.po.spotifystreamer;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
@@ -28,10 +30,12 @@ public class FetchTopTrackTask extends AsyncTask<String, Void, Boolean> {
     @Override
     protected Boolean doInBackground(String... artistInfo) {
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String countryCode = sharedPreferences.getString(mContext.getString(R.string.pref_country_codes_key), mContext.getString(R.string.pref_country_codes_us));
         SpotifyApi spotifyApi = new SpotifyApi();
         SpotifyService spotifyService = spotifyApi.getService();
         Map availableMarket = new HashMap();
-        availableMarket.put("country", "US");
+        availableMarket.put("country", countryCode);
         Tracks topTracks = spotifyService.getArtistTopTrack(artistInfo[0], availableMarket);
         mContext.getContentResolver().delete(MusicContract.TopTrackEntry.CONTENT_URI, null, null);
 
