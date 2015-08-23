@@ -10,10 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.po.spotifystreamer.data.MusicContract;
+import com.squareup.picasso.Picasso;
 
-/**
- * Created by Po on 8/11/2015.
- */
 public class ArtistAdapter extends CursorAdapter{
     public ArtistAdapter(Context context, Cursor c, int flags){
         super(context, c, flags);
@@ -21,19 +19,25 @@ public class ArtistAdapter extends CursorAdapter{
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent){
-        View view = LayoutInflater.from(context).inflate(R.layout.list_item_artist, parent, false);
-
-        return view;
+        return LayoutInflater.from(context).inflate(R.layout.list_item_artist, parent, false);
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor){
+        int idx_artist_image = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_IMAGE);
+        int idx_artist_name = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_NAME);
 
         ImageView imageView = (ImageView) view.findViewById(R.id.list_item_artist_imageview);
-        imageView.setImageResource(R.drawable.artist);
+        if(cursor.getString(idx_artist_image).equals("default")){
+            imageView.setImageResource(R.drawable.artist);
+            imageView.setTag("default");
+        }else{
+            Picasso.with(context).load(cursor.getString(idx_artist_image)).into(imageView);
+            imageView.setTag(cursor.getString(idx_artist_image));
+        }
+
 
         TextView artistNameView = (TextView) view.findViewById(R.id.list_item_artist_textview);
-        int inx_artist_name = cursor.getColumnIndex(MusicContract.ArtistEntry.COLUMN_ARTIST_NAME);
-        artistNameView.setText(cursor.getString(inx_artist_name));
+        artistNameView.setText(cursor.getString(idx_artist_name));
     }
 }

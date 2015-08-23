@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -57,7 +58,7 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
     }
 
     @Override
-    public void onTopTrackSelected(int trackPosition) {
+    public void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String albumArtSmall, String albumArtLarge) {
 //        FragmentManager fm = getSupportFragmentManager();
 //        PlayerFragment pf = new PlayerFragment();
 //        Bundle arguments = new Bundle();
@@ -67,8 +68,14 @@ public class TopTracksActivity extends AppCompatActivity implements TopTracksFra
 //
 //        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
 //        ft.replace(R.id.top_track_fragment_container, pf).commit();
+        Log.d(LOG_TAG, artistName + albumName + trackName);
         Intent playerIntent = new Intent(this, PlayerActivity.class);
         playerIntent.putExtra("EXTRA_TRACK_POSITION", trackPosition);
+        playerIntent.putExtra("EXTRA_ARTIST_NAME", artistName);
+        playerIntent.putExtra("EXTRA_ALBUM_NAME", albumName);
+        playerIntent.putExtra("EXTRA_TRACK_NAME", trackName);
+        playerIntent.putExtra("EXTRA_ART_SMALL", albumArtSmall);
+        playerIntent.putExtra("EXTRA_ART_LARGE", albumArtLarge);
         startActivity(playerIntent);
     }
 

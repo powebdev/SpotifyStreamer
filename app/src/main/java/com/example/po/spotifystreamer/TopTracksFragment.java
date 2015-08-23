@@ -8,12 +8,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
@@ -29,7 +31,7 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
     private Toast noResultsToast;
 
     public interface Callback{
-        void onTopTrackSelected(int trackPosition);
+        void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String albumArtSmall, String albumArtLarge);
     }
 
 
@@ -85,7 +87,12 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if(HelperFunction.hasConnection(getActivity())){
-                    ((Callback) getActivity()).onTopTrackSelected(position);
+                    String artistName = (String)((AppCompatActivity)getActivity()).getSupportActionBar().getSubtitle();
+                    String albumName = (String)((TextView) view.findViewById(R.id.list_item_top_track_album_textview)).getText();
+                    String trackName = (String)((TextView) view.findViewById(R.id.list_item_top_track_name_textview)).getText();
+                    String albumArtSmall = (String)(view.findViewById(R.id.list_item_top_track_imageview)).getTag(R.id.album_art_small_tag_id);
+                    String albumArtLarge = (String)(view.findViewById(R.id.list_item_top_track_imageview)).getTag(R.id.album_art_large_tag_id);
+                    ((Callback) getActivity()).onTopTrackSelected(position, artistName, albumName, trackName, albumArtSmall, albumArtLarge);
 
                 }
             }

@@ -10,10 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.po.spotifystreamer.data.MusicContract;
+import com.squareup.picasso.Picasso;
 
-/**
- * Created by Po on 8/14/2015.
- */
 public class TopTrackAdapter extends CursorAdapter{
     public TopTrackAdapter(Context context, Cursor c, int flags){
         super(context, c, flags);
@@ -21,22 +19,32 @@ public class TopTrackAdapter extends CursorAdapter{
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent){
-        View view = LayoutInflater.from(context).inflate(R.layout.list_item_top_track, parent, false);
-
-        return view;
+        return LayoutInflater.from(context).inflate(R.layout.list_item_top_track, parent, false);
     }
 
     @Override
     public void bindView(View view, Context context, Cursor cursor){
+        int idx_album_image_small = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_SMALL);
+        int idx_album_image_large = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_LARGE);
+        int idx_track_name = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_NAME);
+        int idx_album_name = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY);
+
         ImageView imageView = (ImageView) view.findViewById(R.id.list_item_top_track_imageview);
-        imageView.setImageResource((R.drawable.record));
+
+        if(cursor.getString(idx_album_image_small).equals("default")){
+            imageView.setImageResource((R.drawable.record));
+            imageView.setTag(R.id.album_art_small_tag_id, "default");
+            imageView.setTag(R.id.album_art_large_tag_id, "default");
+        }else{
+            Picasso.with(context).load(cursor.getString(idx_album_image_small)).into(imageView);
+            imageView.setTag(R.id.album_art_small_tag_id, cursor.getString(idx_album_image_small));
+            imageView.setTag(R.id.album_art_large_tag_id, cursor.getString(idx_album_image_large));
+        }
 
         TextView trackNameView = (TextView) view.findViewById(R.id.list_item_top_track_name_textview);
-        int inx_track_name = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_NAME);
-        trackNameView.setText(cursor.getString(inx_track_name));
+        trackNameView.setText(cursor.getString(idx_track_name));
 
         TextView albumNameView = (TextView) view.findViewById(R.id.list_item_top_track_album_textview);
-        int inx_album_name = cursor.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY);
-        albumNameView.setText(cursor.getString(inx_album_name));
+        albumNameView.setText(cursor.getString(idx_album_name));
     }
 }

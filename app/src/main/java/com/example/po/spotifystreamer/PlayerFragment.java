@@ -1,14 +1,13 @@
 package com.example.po.spotifystreamer;
 
-import android.support.v4.app.DialogFragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,9 +18,8 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.po.spotifystreamer.data.MusicContract;
 import com.example.po.spotifystreamer.service.PlayerService;
-//import android.content.Loader;
+import com.squareup.picasso.Picasso;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -34,8 +32,7 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
     private Intent startServiceIntent;
     private Intent bindServiceIntent;
     private boolean mBound = false;
-    private Cursor mSongList;
-    private String mCurrentTrackUrl;
+    private String mAlbumArtUrl;
     private boolean mPlayerStatePlaying = false;
 
     private Handler timeUpdateHandler = new Handler();
@@ -83,8 +80,6 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
         mNextTrackButton = (ImageButton) rootView.findViewById(R.id.frag_player_next_button);
         mPausePlayButton = (ImageButton) rootView.findViewById(R.id.frag_player_play_pause_button);
 
-        String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
-        mSongList = getActivity().getContentResolver().query(MusicContract.TopTrackEntry.CONTENT_URI, null, null, null, sortOrder);
         if(savedInstanceState == null){
             mLoadingWheel.setVisibility(View.VISIBLE);
             mPausePlayButton.setEnabled(false);
@@ -94,29 +89,50 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
             if(getResources().getBoolean(R.bool.twopanes_layout)){
                 Bundle argsBundle = getArguments();
                 trackNumber = argsBundle.getInt("ARGS_TRACK_POSITION", 0);
+                mArtistNameView.setText(argsBundle.getString("ARGS_ARTIST_NAME"));
+                mAlbumNameView.setText(argsBundle.getString("ARGS_ALBUM_NAME"));
+                mTrackNameView.setText(argsBundle.getString("ARGS_TRACK_NAME"));
+                mAlbumArtUrl = argsBundle.getString("ARGS_ART_LARGE");
+                if(mAlbumArtUrl.equals("default")){
+                    mAlbumArtView.setImageResource((R.drawable.record));
+                }else{
+                    Picasso.with(getActivity()).load(mAlbumArtUrl).into(mAlbumArtView);
+                }
+
             }else{
                 Intent intent = getActivity().getIntent();
                 trackNumber = intent.getIntExtra("EXTRA_TRACK_POSITION", 0);
+                mArtistNameView.setText(intent.getStringExtra("EXTRA_ARTIST_NAME"));
+                mAlbumNameView.setText(intent.getStringExtra("EXTRA_ALBUM_NAME"));
+                mTrackNameView.setText(intent.getStringExtra("EXTRA_TRACK_NAME"));
+                mAlbumArtUrl = intent.getStringExtra("EXTRA_ART_LARGE");
+                if(mAlbumArtUrl.equals("default")){
+                    mAlbumArtView.setImageResource((R.drawable.record));
+                }else{
+                    Picasso.with(getActivity()).load(mAlbumArtUrl).into(mAlbumArtView);
+                }
             }
-//            Bundle argsBundle = getArguments();
-//            trackNumber = argsBundle.getInt("ARGS_TRACK_POSITION", 0);
-
-            mSongList.moveToPosition(trackNumber);
-            int idx_track_url = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL);
 
             startServiceIntent = new Intent(getActivity(), PlayerService.class);
-            startServiceIntent.putExtra("EXTRA_TRACK_URL", mSongList.getString(idx_track_url));
+            startServiceIntent.putExtra("EXTRA_TRACK_NUMBER", trackNumber);
             getActivity().startService(startServiceIntent);
 
 
         } else{
             Log.d(LOG_TAG, "savedInstanceState is not null");
-            mSongList.moveToPosition(savedInstanceState.getInt("SAVED_TRACK_POSITION"));
             mTrackDuration = savedInstanceState.getInt("SAVED_TRACK_DURATION");
             mPlayerStatePlaying = savedInstanceState.getBoolean("SAVED_PLAYER_STATE_PLAYING");
+            mArtistNameView.setText(savedInstanceState.getString("SAVED_ARTIST_NAME"));
+            mAlbumNameView.setText(savedInstanceState.getString("SAVED_ALBUM_NAME"));
+            mTrackNameView.setText(savedInstanceState.getString("SAVED_TRACK_NAME"));
+            mAlbumArtUrl = savedInstanceState.getString("SAVED_ART_LARGE");
+            if(mAlbumArtUrl.equals("default")){
+                mAlbumArtView.setImageResource((R.drawable.record));
+            }else{
+                Picasso.with(getActivity()).load(mAlbumArtUrl).into(mAlbumArtView);
+            }
             mDurationView.setText(HelperFunction.timeFormatter(mTrackDuration));
             mTrackSeekBar.setMax(mTrackDuration);
-            timeUpdateHandler.postDelayed(UpdateSongTime, 100);
             mLoadingWheel.setVisibility(View.INVISIBLE);
             mPausePlayButton.setEnabled(true);
             if(mPlayerStatePlaying){
@@ -127,28 +143,19 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
 
         }
 
+
+
         bindServiceIntent = new Intent(getActivity(), PlayerService.class);
         getActivity().bindService(bindServiceIntent, mConnection, Context.BIND_AUTO_CREATE);
-
-        updateUi();
 
         mTrackSeekBar.setOnSeekBarChangeListener(this);
         mPreviousTrackButton.setOnClickListener(this);
         mNextTrackButton.setOnClickListener(this);
         mPausePlayButton.setOnClickListener(this);
+        timeUpdateHandler.postDelayed(UpdateSongTime, 100);
 
         return rootView;
 
-    }
-
-    private void updateUi() {
-        int idx_track_artist = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY);
-        int idx_track_album = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY);
-        int idx_track_name = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_NAME);
-
-        mArtistNameView.setText(mSongList.getString(idx_track_artist));
-        mAlbumNameView.setText(mSongList.getString(idx_track_album));
-        mTrackNameView.setText(mSongList.getString(idx_track_name));
     }
 
     @Override
@@ -171,9 +178,12 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt("SAVED_TRACK_POSITION", mSongList.getPosition());
         outState.putInt("SAVED_TRACK_DURATION", mTrackDuration);
         outState.putBoolean("SAVED_PLAYER_STATE_PLAYING", mPlayerService.isPlaying());
+        outState.putString("SAVED_ARTIST_NAME", (String) mArtistNameView.getText());
+        outState.putString("SAVED_ALBUM_NAME", (String)mAlbumNameView.getText());
+        outState.putString("SAVED_TRACK_NAME", (String)mTrackNameView.getText());
+        outState.putString("SAVED_ART_LARGE", mAlbumArtUrl);
         super.onSaveInstanceState(outState);
     }
 
@@ -218,26 +228,47 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
             mPlayerService = binder.getService();
             mPlayerService.setPlayerCallbackListener(new PlayerService.PlayerCallbackListener() {
                 @Override
-                public void playerPrepared(int trackDuration) {
-                    mTrackDuration = trackDuration;
-                    mTrackSeekBar.setMax(mTrackDuration);
-
+                public void playerLoading() {
                     mTrackSeekBar.setProgress(0);
-
-                    mCurrentPositionView.setText(HelperFunction.timeFormatter(0));
-                    mDurationView.setText(HelperFunction.timeFormatter(trackDuration));
-                    timeUpdateHandler.postDelayed(UpdateSongTime, 100);
-                    mLoadingWheel.setVisibility(View.INVISIBLE);
-                    mPausePlayButton.setEnabled(true);
+                    mLoadingWheel.setVisibility(View.VISIBLE);
+                    mPausePlayButton.setEnabled(false);
                     mPausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
-                    mPlayerStatePlaying = true;
                 }
 
                 @Override
-                public void playbackCompleted() {
-                    mPausePlayButton.setImageResource(android.R.drawable.ic_media_play);
-                    mPlayerStatePlaying = false;
+                public void trackInfoReady(Bundle trackInfo) {
+                    mArtistNameView.setText(trackInfo.getString("INFO_ARTIST_NAME"));
+                    mAlbumNameView.setText(trackInfo.getString("INFO_ALBUM_NAME"));
+                    mTrackNameView.setText(trackInfo.getString("INFO_TRACK_NAME"));
+                    mAlbumArtUrl = trackInfo.getString("INFO_ART_LARGE");
+                    if(mAlbumArtUrl.equals("default")){
+                        mAlbumArtView.setImageResource((R.drawable.record));
+                    }else{
+                        Picasso.with(getActivity()).load(mAlbumArtUrl).into(mAlbumArtView);
+                    }
 
+                }
+
+                @Override
+                public void trackDurationReady(int duration) {
+                    mTrackDuration = duration;
+                    mTrackSeekBar.setMax(mTrackDuration);
+                    mDurationView.setText(HelperFunction.timeFormatter(mTrackDuration));
+                    mLoadingWheel.setVisibility(View.INVISIBLE);
+                    mPausePlayButton.setEnabled(true);
+                    mPausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                }
+
+                @Override
+                public void isPlaying() {
+                    mPlayerStatePlaying = true;
+                    mPausePlayButton.setImageResource(android.R.drawable.ic_media_pause);
+                }
+
+                @Override
+                public void isPaused() {
+                    mPlayerStatePlaying = false;
+                    mPausePlayButton.setImageResource(android.R.drawable.ic_media_play);
                 }
             });
             mBound = true;
@@ -298,36 +329,14 @@ public class PlayerFragment extends DialogFragment implements View.OnClickListen
                 break;
             case R.id.frag_player_previous_button:
                 if(mBound){
-                    if(!mSongList.isFirst()){
-                        mSongList.moveToPrevious();
-                        skipTrack();
-                        updateUi();
-                    }else{
-                        mPlayerService.seekTo(0);
-                    }
+                    mPlayerService.previousTrack();
                 }
                 break;
             case R.id.frag_player_next_button:
                 if(mBound){
-                    if(!mSongList.isLast()){
-                        mSongList.moveToNext();
-                        skipTrack();
-                        updateUi();
-                    }else{
-                        mPlayerService.seekTo(0);
-                    }
+                    mPlayerService.nextTrack();
                 }
                 break;
         }
-    }
-
-    private void skipTrack() {
-        int idx_track_url = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL);
-        startServiceIntent = new Intent(getActivity(), PlayerService.class);
-        startServiceIntent.putExtra("EXTRA_TRACK_URL", mSongList.getString(idx_track_url));
-        mPlayerStatePlaying = false;
-        mPausePlayButton.setImageResource(android.R.drawable.ic_media_play);
-        mLoadingWheel.setVisibility(View.VISIBLE);
-        getActivity().startService(startServiceIntent);
     }
 }

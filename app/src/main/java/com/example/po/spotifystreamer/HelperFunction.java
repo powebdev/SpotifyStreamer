@@ -4,43 +4,80 @@ import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.util.Log;
 
-import kaaes.spotify.webapi.android.models.Artist;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import kaaes.spotify.webapi.android.models.Image;
 
 /**
  * Created by Po on 8/13/2015.
  * Collection of various methods used in the app.
  */
 public class HelperFunction {
-    public static boolean sPlayerServiceStarted = false;
 
-    public static int findProperImage(Artist artist) {
-        int foundImage;
-        if (artist.images.size() == 0) {
-            foundImage = -1;
-        } else if (artist.images.size() == 1) {
-            foundImage = 0;
+    public static String findProperImage(List<Image> imageList, int sizeWanted, boolean atLeastOrMost) {
+        String foundURL = "default";
+        int foundImageSize;
+
+        if (imageList.size() == 0) {
+            Log.d("in findImage Method", "no image available");
+            foundURL = "default";
+        } else if (imageList.size() == 1) {
+            Log.d("in findImage Method", "only one image");
+            foundURL = imageList.get(0).url;
         } else {
-            int foundTwoHundred = 0;
-            while (foundTwoHundred < artist.images.size()) {
-                if (artist.images.get(foundTwoHundred).height == 200) {
-                    return foundTwoHundred;
-                }
-                foundTwoHundred++;
+            List<Integer> imageSizeList = new ArrayList<>();
+            for(Image imageItem:imageList){
+                imageSizeList.add(imageItem.height);
             }
-            foundImage = foundTwoHundred - 1;
+            Collections.sort(imageSizeList);
+            int foundImagePosition = 0;
+            boolean imageFound = false;
+            if(atLeastOrMost){
+                Collections.reverse(imageSizeList);
+                while(foundImagePosition < imageList.size() && !imageFound){
+                    if(sizeWanted < imageSizeList.get(foundImagePosition)){
+                        foundImagePosition++;
+                    }else{
+                        foundImagePosition--;
+                        imageFound = true;
+                    }
+                }
+
+            }else{
+                while(foundImagePosition < imageList.size() && !imageFound){
+                    if(sizeWanted > imageSizeList.get(foundImagePosition)){
+                        foundImagePosition++;
+                    }else{
+                        foundImagePosition--;
+                        imageFound = true;
+                    }
+                }
+
+            }
+            if(!imageFound || foundImagePosition < 0){
+                foundImageSize = imageSizeList.get(0);
+            }else{
+                foundImageSize = imageSizeList.get(foundImagePosition);
+            }
+            for(Image imageItem:imageList){
+                if(imageItem.height == foundImageSize){
+                    foundURL = imageItem.url;
+                }
+            }
         }
-        return foundImage;
+        return foundURL;
     }
 
     public static boolean hasConnection(Activity activity){
         ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
 
-
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-//        return hasConnection;
     }
 
     public static String timeFormatter(int mSec){

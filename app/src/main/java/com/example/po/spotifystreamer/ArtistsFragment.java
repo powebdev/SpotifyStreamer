@@ -13,7 +13,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -62,20 +61,21 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    if (HelperFunction.hasConnection(getActivity())) {
-                        String searchStr = v.getText().toString();
-                        if(!searchStr.isEmpty()){
-                            fetchArtistResults(searchStr);
-                            handled = true;
-                        }
+                if (HelperFunction.hasConnection(getActivity())) {
+                    String searchStr = v.getText().toString();
+                    if(!searchStr.isEmpty()){
+                        fetchArtistResults(searchStr);
+                        handled = true;
                     }
-                    else{
-                        showToast(R.string.no_network_connection_text);
-                        handled = false;
-                    }
-
                 }
+                else{
+                    showToast(R.string.no_network_connection_text);
+                    handled = false;
+                }
+//                if (actionId == EditorInfo.IME_ACTION_DONE) {
+//
+//
+//                }
 
                 return handled;
             }

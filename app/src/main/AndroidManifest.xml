@@ -2,14 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.po.spotifystreamer" >
 
-    <uses-sdk android:minSdkVersion="11" />
+    <uses-sdk android:minSdkVersion="16" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!--<android:uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
-    <!--<android:uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
-    <!--<android:uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />-->
 
     <application
         android:allowBackup="true"
@@ -37,9 +33,17 @@
             android:authorities="com.example.po.spotifystreamer"
             android:name=".data.MusicProvider" />
         <service
-            android:name=".service.PlayerService"
+            android:name="com.example.po.spotifystreamer.service.PlayerService"
             android:exported="false"
-            android:stopWithTask="false"/>
+            android:stopWithTask="false">
+            <intent-filter>
+                <action android:name="com.example.po.spotifystreamer.service.ACTION_PLAY" />
+                <action android:name="com.example.po.spotifystreamer.service.ACTION_PAUSE" />
+                <action android:name="com.example.po.spotifystreamer.service.ACTION_NEXT" />
+                <action android:name="com.example.po.spotifystreamer.service.ACTION_PREVIOUS" />
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

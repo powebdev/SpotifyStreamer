@@ -85,11 +85,16 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
     }
 
     @Override
-    public void onTopTrackSelected(int trackPosition) {
+    public void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String albumArtSmall, String albumArtLarge) {
         FragmentManager fm = getSupportFragmentManager();
         PlayerFragment pf = new PlayerFragment();
         Bundle arguments = new Bundle();
         arguments.putInt("ARGS_TRACK_POSITION", trackPosition);
+        arguments.putString("ARGS_ARTIST_NAME", artistName);
+        arguments.putString("ARGS_ALBUM_NAME", albumName);
+        arguments.putString("ARGS_TRACK_NAME", trackName);
+        arguments.putString("ARGS_ART_SMALL", albumArtSmall);
+        arguments.putString("ARGS_ART_LARGE", albumArtLarge);
         pf.setArguments(arguments);
         pf.show(fm, "playerDialog");
     }

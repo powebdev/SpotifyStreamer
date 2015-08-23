@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:inputType="text"
         android:hint="@string/enter_artist_names"
-        android:imeOptions="actionSearch"
+        android:imeOptions="normal"
         />
 
     <ListView
