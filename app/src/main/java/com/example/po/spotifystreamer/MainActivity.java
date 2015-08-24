@@ -3,66 +3,66 @@ package com.example.po.spotifystreamer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.support.v7.widget.ShareActionProvider;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends AppCompatActivity implements ArtistsFragment.Callback, TopTracksFragment.Callback{
-    private static final String LOG_TAG =MainActivity.class.getSimpleName();
+public class MainActivity extends AppCompatActivity implements PlayerFragment.Callback, ArtistsFragment.Callback, TopTracksFragment.Callback {
     private static final String TOPTRACKFRAG_TAG = "TTFTAG";
     private boolean mTwoPane;
+    private ShareActionProvider mShareActionProvider;
+    private PlayerFragment pf = new PlayerFragment();
+    private boolean mServiceStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(LOG_TAG, "App in onCreate");
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        if(findViewById(R.id.top_track_fragment_container) != null){
-            Log.d(LOG_TAG, "In two pane");
+        if (findViewById(R.id.top_track_fragment_container) != null) {
             mTwoPane = true;
-        }else{
-            Log.d(LOG_TAG, "In one pane");
+        } else {
             mTwoPane = false;
         }
-        if(savedInstanceState == null){
 
+        if (savedInstanceState != null) {
+            mServiceStarted = savedInstanceState.getBoolean("SAVED_SERVICE_STARTED");
         }
     }
 
     @Override
-    protected void onStart() {
-        Log.d(LOG_TAG, "App in onStart");
-        super.onStart();
-    }
-
-    @Override
-    protected void onResume() {
-        Log.d(LOG_TAG, "App in onResume");
-
-        super.onResume();
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("SAVED_SERVICE_STARTED", mServiceStarted);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        if (id == R.id.action_open_player && mServiceStarted) {
+            FragmentManager fm = getSupportFragmentManager();
+            Bundle arguments = new Bundle();
+            arguments.clear();
+            arguments.putBoolean("ARGS_NEW_TRACK", false);
+            pf.setArguments(arguments);
+            pf.show(fm, "playerDialog");
             return true;
         }
 
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
 
     @Override
     public void onArtistSelected(String artistName) {
-        if(mTwoPane){
+        if (mTwoPane) {
             ActionBar actionBar = getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setSubtitle(artistName);
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
             TopTracksFragment ttf = new TopTracksFragment();
             getSupportFragmentManager().beginTransaction().replace(R.id.top_track_fragment_container, ttf, TOPTRACKFRAG_TAG).commit();
 
-        }else{
+        } else {
             Intent topTrackIntent = new Intent(this, TopTracksActivity.class);
             Bundle infoStrings = new Bundle();
             infoStrings.putString("EXTRA_ARTIST_NAME", artistName);
@@ -90,17 +90,28 @@ public class MainActivity extends AppCompatActivity implements ArtistsFragment.C
     }
 
     @Override
-    public void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String albumArtSmall, String albumArtLarge) {
+    public void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String trackExtUrl, String albumArtSmall, String albumArtLarge, int trackDuration) {
         FragmentManager fm = getSupportFragmentManager();
-        PlayerFragment pf = new PlayerFragment();
         Bundle arguments = new Bundle();
+        arguments.clear();
+        arguments.putBoolean("ARGS_NEW_TRACK", true);
         arguments.putInt("ARGS_TRACK_POSITION", trackPosition);
         arguments.putString("ARGS_ARTIST_NAME", artistName);
         arguments.putString("ARGS_ALBUM_NAME", albumName);
         arguments.putString("ARGS_TRACK_NAME", trackName);
+        arguments.putString("ARGS_TRACK_EXT_URL", trackExtUrl);
+        arguments.putInt("ARGS_TRACK_DURATION", trackDuration);
         arguments.putString("ARGS_ART_SMALL", albumArtSmall);
         arguments.putString("ARGS_ART_LARGE", albumArtLarge);
         pf.setArguments(arguments);
+        mServiceStarted = true;
         pf.show(fm, "playerDialog");
+    }
+
+    @Override
+    public void newShareIntent(String newUrl) {
+        TopTracksFragment ttf = (TopTracksFragment) getSupportFragmentManager().findFragmentByTag(TOPTRACKFRAG_TAG);
+        mShareActionProvider = ttf.getShareActionProvider();
+        mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(newUrl));
     }
 }

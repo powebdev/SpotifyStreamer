@@ -3,4 +3,7 @@
     <item type="id" name="album_art_small_tag_id" />
     <item type="id" name="album_art_large_tag_id" />
     <item type="id" name="notification_id" />
+    <item type="id" name="track_external_url_id" />
+    <item type="id" name="track_duration_id" />
+    <item type="id" name="artist_name_id" />
 </resources>

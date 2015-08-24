@@ -5,9 +5,6 @@ import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
-/**
- * Created by Po on 8/2/2015.
- */
 public class MusicContract {
 
     public static final String CONTENT_AUTHORITY = "com.example.po.spotifystreamer";
@@ -16,7 +13,7 @@ public class MusicContract {
     public static final String PATH_ARTIST = "artist";
     public static final String PATH_TOP_TRACK = "top_track";
 
-    public static final class ArtistEntry implements BaseColumns{
+    public static final class ArtistEntry implements BaseColumns {
 
         public static final String TABLE_NAME = "artist";
 
@@ -26,27 +23,17 @@ public class MusicContract {
         public static final String COLUMN_ARTIST_POPULARITY = "artist_popularity";
 
         public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon().appendPath(PATH_ARTIST).build();
-
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ARTIST;
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ARTIST;
 
-        public static Uri buildArtistUri(long id){
+        public static Uri buildArtistUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }
 
-    public static final class AlbumEntry implements BaseColumns{
-
-        public static final String TABLE_NAME = "album";
-
-        public static final String COLUMN_ALBUM_NAME = "album_name";
-        public static final String COLUMN_ALBUM_SPOTIFY_ID = "album_spotify_id";
-        public static final String COLUMN_ALBUM_THUMBNAIL = "album_thumbnail";
-        public static final String COLUMN_ALBUM_IMAGE = "album_image";
-    }
-    public static final class TopTrackEntry implements BaseColumns{
+    public static final class TopTrackEntry implements BaseColumns {
 
         public static final String TABLE_NAME = "top_track";
 
@@ -54,6 +41,8 @@ public class MusicContract {
         public static final String COLUMN_TRACK_SPOTIFY_ID = "track_spotify_id";
         public static final String COLUMN_TRACK_PREVIEW_URL = "track_url";
         public static final String COLUMN_TRACK_POPULARITY = "track_popularity";
+        public static final String COLUMN_TRACK_EXTERNAL_URL = "track_ext_url";
+        public static final String COLUMN_TRACK_DURATION = "track_duration";
         public static final String COLUMN_ARTIST_KEY = "artist_id";
         public static final String COLUMN_ALBUM_KEY = "album_id";
         public static final String COLUMN_ALBUM_ART_LARGE = "album_art_large";
@@ -65,7 +54,7 @@ public class MusicContract {
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_TOP_TRACK;
 
-        public static Uri buildTopTrackUri(long id){
+        public static Uri buildTopTrackUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }

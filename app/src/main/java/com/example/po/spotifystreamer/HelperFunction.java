@@ -2,6 +2,7 @@ package com.example.po.spotifystreamer;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -13,7 +14,6 @@ import java.util.List;
 import kaaes.spotify.webapi.android.models.Image;
 
 /**
- * Created by Po on 8/13/2015.
  * Collection of various methods used in the app.
  */
 public class HelperFunction {
@@ -30,41 +30,39 @@ public class HelperFunction {
             foundURL = imageList.get(0).url;
         } else {
             List<Integer> imageSizeList = new ArrayList<>();
-            for(Image imageItem:imageList){
+            for (Image imageItem : imageList) {
                 imageSizeList.add(imageItem.height);
             }
             Collections.sort(imageSizeList);
             int foundImagePosition = 0;
             boolean imageFound = false;
-            if(atLeastOrMost){
+            if (atLeastOrMost) {
                 Collections.reverse(imageSizeList);
-                while(foundImagePosition < imageList.size() && !imageFound){
-                    if(sizeWanted < imageSizeList.get(foundImagePosition)){
+                while (foundImagePosition < imageList.size() && !imageFound) {
+                    if (sizeWanted < imageSizeList.get(foundImagePosition)) {
                         foundImagePosition++;
-                    }else{
+                    } else {
                         foundImagePosition--;
                         imageFound = true;
                     }
                 }
-
-            }else{
-                while(foundImagePosition < imageList.size() && !imageFound){
-                    if(sizeWanted > imageSizeList.get(foundImagePosition)){
+            } else {
+                while (foundImagePosition < imageList.size() && !imageFound) {
+                    if (sizeWanted > imageSizeList.get(foundImagePosition)) {
                         foundImagePosition++;
-                    }else{
+                    } else {
                         foundImagePosition--;
                         imageFound = true;
                     }
                 }
-
             }
-            if(!imageFound || foundImagePosition < 0){
+            if (!imageFound || foundImagePosition < 0) {
                 foundImageSize = imageSizeList.get(0);
-            }else{
+            } else {
                 foundImageSize = imageSizeList.get(foundImagePosition);
             }
-            for(Image imageItem:imageList){
-                if(imageItem.height == foundImageSize){
+            for (Image imageItem : imageList) {
+                if (imageItem.height == foundImageSize) {
                     foundURL = imageItem.url;
                 }
             }
@@ -72,7 +70,7 @@ public class HelperFunction {
         return foundURL;
     }
 
-    public static boolean hasConnection(Activity activity){
+    public static boolean hasConnection(Activity activity) {
         ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(
                 Context.CONNECTIVITY_SERVICE);
 
@@ -80,12 +78,17 @@ public class HelperFunction {
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
-    public static String timeFormatter(int mSec){
+    public static String timeFormatter(int mSec) {
         long second = (mSec / 1000) % 60;
-        long minute = mSec / (1000 *60);
+        long minute = mSec / (1000 * 60);
         return String.format("%d:%02d", minute, second);
-//        return time;
     }
 
-
+    public static Intent createShareForecastIntent(String trackExtUrl) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Check out what I am listening to right now: " + trackExtUrl);
+        return shareIntent;
+    }
 }

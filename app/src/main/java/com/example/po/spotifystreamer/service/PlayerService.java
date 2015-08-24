@@ -23,21 +23,23 @@ import com.example.po.spotifystreamer.data.MusicContract;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-public class PlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener{
+public class PlayerService extends Service implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener {
 
-    public interface PlayerCallbackListener{
+    public interface PlayerCallbackListener {
         void playerLoading();
+
         void trackInfoReady(Bundle trackInfo);
-        void trackDurationReady(int duration);
+
         void isPlaying();
+
         void isPaused();
     }
 
-    public void setPlayerCallbackListener(PlayerCallbackListener listener){
+    public void setPlayerCallbackListener(PlayerCallbackListener listener) {
         mPlayerCallbackListener = listener;
     }
+
     private Target loadTarget;
-    private static final String LOG_TAG = PlayerService.class.getSimpleName();
     private static final String ACTION_PLAY = "com.example.po.spotifystreamer.service.ACTION_PLAY";
     private static final String ACTION_PAUSE = "com.example.po.spotifystreamer.service.ACTION_PAUSE";
     private static final String ACTION_NEXT = "com.example.po.spotifystreamer.service.ACTION_NEXT";
@@ -45,29 +47,22 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     private String mTrackUrl;
     private MediaPlayer mPlayer;
     private Cursor mSongList;
-    private String mArtistName, mAlbumName, mTrackName, mAlbumArtLarge, mAlbumArtSmall;
+    private String mArtistName, mAlbumName, mTrackName, mTrackExtUrl, mAlbumArtLarge, mAlbumArtSmall;
+    private int mTrackDuration;
     private Bundle mTrackInfo = new Bundle();
     private PlayerCallbackListener mPlayerCallbackListener = null;
     private Notification.Builder mNotificationBuilder;
     NotificationManager mNotifyMgr;
-    private int[] allControls= {0, 1, 2};
+    private int[] allControls = {0, 1, 2};
 
     PendingIntent mPendingPlayIntent;
     PendingIntent mPendingPauseIntent;
     PendingIntent mPendingNextTrackIntent;
     PendingIntent mPendingPreviousTrackIntent;
 
-    // Gets an instance of the NotificationManager service
-
-// Builds the notification and issues it.
-
-
     @Override
     public void onCreate() {
-        Log.d(LOG_TAG, "in onCreate");
         super.onCreate();
-//        String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
-//        mSongList = getContentResolver().query(MusicContract.TopTrackEntry.CONTENT_URI, null, null, null, sortOrder);
         mPlayer = new MediaPlayer();
         mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
@@ -80,24 +75,6 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         mPendingNextTrackIntent = PendingIntent.getService(this, 0, nextTrackIntent, 0);
         mPendingPreviousTrackIntent = PendingIntent.getService(this, 0, previousTrackIntent, 0);
 
-//        mNotificationBuilder = new Notification.Builder(this)
-//                .setSmallIcon(android.R.drawable.ic_media_play)
-//                .setContentTitle("Now Playing")
-//                .setContentText("You are notified")
-//                .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
-//                .addAction(android.R.drawable.ic_media_pause, "", mPendingPauseIntent)
-//                .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
-//            Log.d(LOG_TAG, "Version is Jelly Bean MR1");
-//            mNotificationBuilder.setShowWhen(false);
-//        }
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-//            Log.d(LOG_TAG, "Version is Lollipop");
-//            mNotificationBuilder
-//                    .setVisibility(Notification.VISIBILITY_PUBLIC)
-//                    .setStyle(new Notification.MediaStyle().setShowActionsInCompactView(allControls));
-//        }
-
         mNotifyMgr = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         mPlayer.setOnPreparedListener(this);
@@ -107,9 +84,8 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        if(intent != null){
-            if(intent.hasExtra("EXTRA_TRACK_NUMBER")){
+        if (intent != null) {
+            if (intent.hasExtra("EXTRA_TRACK_NUMBER")) {
                 String sortOrder = MusicContract.TopTrackEntry.COLUMN_TRACK_POPULARITY + " DESC";
                 mSongList = getContentResolver().query(MusicContract.TopTrackEntry.CONTENT_URI, null, null, null, sortOrder);
                 int trackNumber = intent.getIntExtra("EXTRA_TRACK_NUMBER", 0);
@@ -118,10 +94,9 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                 refreshTrackInfoBundle();
                 settingTrackUrl();
                 settingPlayer();
-            }else{
+            } else {
                 String action = intent.getAction();
-                Log.d(LOG_TAG, action);
-                switch(action){
+                switch (action) {
                     case ACTION_PLAY:
                         resumeTrack();
                         break;
@@ -163,14 +138,31 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         }
 
     }
+
+    @Override
+    public void onRebind(Intent intent) {
+        refreshTrackInfoBundle();
+        mPlayerCallbackListener.trackInfoReady(mTrackInfo);
+        if (mPlayer.isPlaying()) {
+            mPlayerCallbackListener.isPlaying();
+        } else {
+            mPlayerCallbackListener.isPaused();
+        }
+        super.onRebind(intent);
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
 
     @Override
+    public boolean onUnbind(Intent intent) {
+        return true;
+    }
+
+    @Override
     public void onPrepared(MediaPlayer mp) {
-        mPlayerCallbackListener.trackDurationReady(mPlayer.getDuration());
         showNotification(true);
         mPlayerCallbackListener.isPlaying();
         mPlayer.start();
@@ -181,24 +173,24 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         nextTrack();
     }
 
-    public void resumeTrack(){
+    public void resumeTrack() {
         showNotification(true);
         mPlayerCallbackListener.isPlaying();
         mPlayer.start();
     }
 
-    public void pauseTrack(){
+    public void pauseTrack() {
         showNotification(false);
         mPlayerCallbackListener.isPaused();
         mPlayer.pause();
     }
 
-    public void nextTrack(){
+    public void nextTrack() {
         mPlayerCallbackListener.playerLoading();
-        if(!mSongList.isLast()){
+        if (!mSongList.isLast()) {
             mSongList.moveToNext();
 
-        }else{
+        } else {
             mSongList.moveToFirst();
         }
         settingTrackInfo();
@@ -207,15 +199,13 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         showNotification(true);
         settingTrackUrl();
         settingPlayer();
-
     }
 
-    public void previousTrack(){
+    public void previousTrack() {
         mPlayerCallbackListener.playerLoading();
-        if (!mSongList.isFirst()){
+        if (!mSongList.isFirst()) {
             mSongList.moveToPrevious();
-
-        }else{
+        } else {
             mSongList.moveToLast();
         }
         settingTrackInfo();
@@ -226,60 +216,64 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
         settingPlayer();
     }
 
-    public boolean isPlaying(){
+    public boolean isPlaying() {
         return mPlayer.isPlaying();
     }
 
-    public int getCurrentTrackPosition(){
+    public int getCurrentTrackPosition() {
         return mPlayer.getCurrentPosition();
     }
 
-    public void seekTo(int position){
+    public void seekTo(int position) {
         mPlayer.seekTo(position);
     }
 
-    public void refreshTrackInfoBundle(){
+    public void refreshTrackInfoBundle() {
         mTrackInfo.clear();
         mTrackInfo.putString("INFO_ARTIST_NAME", mArtistName);
         mTrackInfo.putString("INFO_ALBUM_NAME", mAlbumName);
         mTrackInfo.putString("INFO_TRACK_NAME", mTrackName);
+        mTrackInfo.putString("INFO_TRACK_EXT_URL", mTrackExtUrl);
+        mTrackInfo.putInt("INFO_TRACK_DURATION", mTrackDuration);
         mTrackInfo.putString("INFO_ART_LARGE", mAlbumArtLarge);
         mTrackInfo.putString("INFO_ART_SMALL", mAlbumArtSmall);
     }
 
-    private void settingTrackUrl(){
+    private void settingTrackUrl() {
         int idx_track_url = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_PREVIEW_URL);
         mTrackUrl = mSongList.getString(idx_track_url);
     }
 
-    private void settingTrackInfo(){
+    private void settingTrackInfo() {
         int idx_track_artist = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ARTIST_KEY);
         int idx_track_album = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_KEY);
         int idx_track_name = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_NAME);
+        int idx_track_ext_url = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_EXTERNAL_URL);
+        int idx_track_duration = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_TRACK_DURATION);
         int idx_album_art_large = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_LARGE);
         int idx_album_art_small = mSongList.getColumnIndex(MusicContract.TopTrackEntry.COLUMN_ALBUM_ART_SMALL);
 
         mArtistName = mSongList.getString(idx_track_artist);
         mAlbumName = mSongList.getString(idx_track_album);
         mTrackName = mSongList.getString(idx_track_name);
+        mTrackExtUrl = mSongList.getString(idx_track_ext_url);
+        mTrackDuration = mSongList.getInt(idx_track_duration);
         mAlbumArtLarge = mSongList.getString(idx_album_art_large);
         mAlbumArtSmall = mSongList.getString(idx_album_art_small);
     }
 
     private void settingPlayer() {
-
         mPlayer.reset();
-        try{
+        try {
             mPlayer.setDataSource(mTrackUrl);
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
-        mPlayer.prepareAsync();
+            mPlayer.prepareAsync();
     }
 
-    public void loadBitmap(String url){
-        if(loadTarget == null) loadTarget = new Target() {
+    public void loadBitmap(String url) {
+        if (loadTarget == null) loadTarget = new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                 mNotificationBuilder.setLargeIcon(bitmap);
@@ -287,34 +281,32 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             @Override
             public void onBitmapFailed(Drawable errorDrawable) {
-
             }
 
             @Override
             public void onPrepareLoad(Drawable placeHolderDrawable) {
-
             }
         };
         Picasso.with(this).load(url).into(loadTarget);
     }
 
-    public void showNotification(boolean playingNotPaused){
+    public void showNotification(boolean playingNotPaused) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String displayNotificationsKey = this.getString(R.string.pref_enable_notifications_key);
         boolean displayNotifications = sharedPreferences.getBoolean(displayNotificationsKey, Boolean.parseBoolean(this.getString(R.string.pref_enable_notifications_default)));
-        if(displayNotifications){
+        if (displayNotifications) {
             mNotificationBuilder = new Notification.Builder(this)
                     .setContentTitle("Now Playing")
                     .setContentText(mTrackName);
 
-            if(playingNotPaused){
+            if (playingNotPaused) {
                 mNotificationBuilder
                         .setSmallIcon(android.R.drawable.ic_media_play)
                         .setOngoing(true)
                         .addAction(android.R.drawable.ic_media_previous, "", mPendingPreviousTrackIntent)
                         .addAction(android.R.drawable.ic_media_pause, "", mPendingPauseIntent)
                         .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
-            }else{
+            } else {
                 mNotificationBuilder
                         .setSmallIcon(android.R.drawable.ic_media_pause)
                         .setOngoing(false)
@@ -323,12 +315,10 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
                         .addAction(android.R.drawable.ic_media_next, "", mPendingNextTrackIntent);
             }
 
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1){
-                Log.d(LOG_TAG, "Version is Jelly Bean MR1");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
                 mNotificationBuilder.setShowWhen(false);
             }
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-                Log.d(LOG_TAG, "Version is Lollipop");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 mNotificationBuilder
                         .setVisibility(Notification.VISIBILITY_PUBLIC)
                         .setStyle(new Notification.MediaStyle().setShowActionsInCompactView(allControls));
@@ -336,8 +326,13 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
 
             loadBitmap(mAlbumArtSmall);
             mNotifyMgr.notify(R.id.notification_id, mNotificationBuilder.build());
+        } else {
+            try {
+                mNotifyMgr.cancel(R.id.notification_id);
+                Log.d("BOOM!", "Cancelled");
+            } catch (NullPointerException e) {
+                Log.d("no notes yet", "nothing to cancel");
+            }
         }
-
     }
-
 }
