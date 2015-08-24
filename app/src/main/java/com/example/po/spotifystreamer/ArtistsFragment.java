@@ -67,6 +67,7 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                view.setSelected(true);
                 if (HelperFunction.hasConnection(getActivity())) {
 
                     Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);

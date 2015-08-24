@@ -63,6 +63,7 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                view.setSelected(true);
                 if (HelperFunction.hasConnection(getActivity())) {
 
                     String artistName = (String) (view.findViewById(R.id.list_item_top_track_album_textview)).getTag(R.id.artist_name_id);
