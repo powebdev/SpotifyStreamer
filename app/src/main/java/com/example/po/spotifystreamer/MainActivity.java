@@ -112,6 +112,6 @@ public class MainActivity extends AppCompatActivity implements PlayerFragment.Ca
     public void newShareIntent(String newUrl) {
         TopTracksFragment ttf = (TopTracksFragment) getSupportFragmentManager().findFragmentByTag(TOPTRACKFRAG_TAG);
         mShareActionProvider = ttf.getShareActionProvider();
-        mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(newUrl));
+        mShareActionProvider.setShareIntent(HelperFunction.createShareMusicIntent(newUrl));
     }
 }

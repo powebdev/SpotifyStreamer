@@ -32,7 +32,7 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
         mTrackExtUrl = getIntent().getStringExtra("EXTRA_TRACK_EXT_URL");
         if (mTrackExtUrl != null) {
-            mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(mTrackExtUrl));
+            mShareActionProvider.setShareIntent(HelperFunction.createShareMusicIntent(mTrackExtUrl));
         }
         return true;
     }
@@ -49,6 +49,6 @@ public class PlayerActivity extends AppCompatActivity implements PlayerFragment.
 
     @Override
     public void newShareIntent(String newUrl) {
-        mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(newUrl));
+        mShareActionProvider.setShareIntent(HelperFunction.createShareMusicIntent(newUrl));
     }
 }

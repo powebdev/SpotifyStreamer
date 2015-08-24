@@ -26,7 +26,7 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
 
     private static final int ARTIST_LOADER_ID = 0;
     private ArtistAdapter mArtistAdapter;
-    public Toast noResultsToast;
+    public Toast mShowToast;
     private int mPosition = ListView.INVALID_POSITION;
     private ListView mListView;
 
@@ -55,7 +55,11 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
                         handled = true;
                     }
                 } else {
-                    showToast(R.string.no_network_connection_text);
+                    if(mShowToast != null){
+                        mShowToast.cancel();
+                    }
+                    mShowToast = HelperFunction.showToast(R.string.no_network_connection_text, getActivity());
+                    mShowToast.show();
                     handled = false;
                 }
                 return handled;
@@ -82,7 +86,12 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
                         ((Callback) getActivity()).onArtistSelected(artistName);
                     }
                 } else {
-                    showToast(R.string.no_network_connection_text);
+                    if(mShowToast != null){
+                        mShowToast.cancel();
+                    }
+                    mShowToast = HelperFunction.showToast(R.string.no_network_connection_text, getActivity());
+                    mShowToast.show();
+
                 }
                 mPosition = position;
 
@@ -144,7 +153,11 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
         queryArtistTask.execute(searchString);
         try {
             if (!queryArtistTask.get()) {
-                showToast(R.string.no_artists_result_text);
+                if(mShowToast != null){
+                    mShowToast.cancel();
+                }
+                mShowToast = HelperFunction.showToast(R.string.no_artists_result_text, getActivity());
+                mShowToast.show();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -156,23 +169,16 @@ public class ArtistsFragment extends Fragment implements LoaderManager.LoaderCal
         queryTopTrackTask.execute(searchString);
         try {
             if (!queryTopTrackTask.get()) {
-                showToast(R.string.no_tracks_result_text);
+                if(mShowToast != null){
+                    mShowToast.cancel();
+                }
+                mShowToast = HelperFunction.showToast(R.string.no_tracks_result_text, getActivity());
+                mShowToast.show();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * this method shows the proper toast message depends on the context
-     *
-     * @param toastMsg xml string id used to display proper message
-     */
-    public void showToast(int toastMsg) {
-        if (noResultsToast != null) {
-            noResultsToast.cancel();
-        }
-        noResultsToast = Toast.makeText(getActivity(), toastMsg, Toast.LENGTH_SHORT);
-        noResultsToast.show();
-    }
+
 }

@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.po.spotifystreamer.data.MusicContract;
 
@@ -31,6 +32,7 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
     private String mExtUrl;
     private ListView mListView;
     private int mPosition = ListView.INVALID_POSITION;
+    public Toast mShowToast;
 
     public interface Callback {
         void onTopTrackSelected(int trackPosition, String artistName, String albumName, String trackName, String trackExtUrl, String albumArtSmall, String albumArtLarge, int trackDuration);
@@ -73,13 +75,19 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
                     int trackDuration = Integer.parseInt((String) (view.findViewById(R.id.list_item_top_track_name_textview)).getTag(R.id.track_duration_id));
 
                     if (mShareActionProvider != null) {
-                        mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(mExtUrl));
+                        mShareActionProvider.setShareIntent(HelperFunction.createShareMusicIntent(mExtUrl));
                     }
 
                     String albumArtSmall = (String) (view.findViewById(R.id.list_item_top_track_imageview)).getTag(R.id.album_art_small_tag_id);
                     String albumArtLarge = (String) (view.findViewById(R.id.list_item_top_track_imageview)).getTag(R.id.album_art_large_tag_id);
 
                     ((Callback) getActivity()).onTopTrackSelected(position, artistName, albumName, trackName, mExtUrl, albumArtSmall, albumArtLarge, trackDuration);
+                }else{
+                    if(mShowToast != null){
+                        mShowToast.cancel();
+                    }
+                    mShowToast = HelperFunction.showToast(R.string.no_network_connection_text, getActivity());
+                    mShowToast.show();
                 }
                 mPosition = position;
             }
@@ -138,7 +146,7 @@ public class TopTracksFragment extends Fragment implements LoaderManager.LoaderC
         MenuItem menuItem = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
         if (mExtUrl != null) {
-            mShareActionProvider.setShareIntent(HelperFunction.createShareForecastIntent(mExtUrl));
+            mShareActionProvider.setShareIntent(HelperFunction.createShareMusicIntent(mExtUrl));
         }
     }
 

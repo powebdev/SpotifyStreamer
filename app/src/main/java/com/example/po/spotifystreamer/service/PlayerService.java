@@ -17,7 +17,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.example.po.spotifystreamer.HelperFunction;
 import com.example.po.spotifystreamer.R;
 import com.example.po.spotifystreamer.data.MusicContract;
 import com.squareup.picasso.Picasso;
@@ -54,6 +56,7 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     private Notification.Builder mNotificationBuilder;
     NotificationManager mNotifyMgr;
     private int[] allControls = {0, 1, 2};
+    public Toast mShowToast;
 
     PendingIntent mPendingPlayIntent;
     PendingIntent mPendingPauseIntent;
@@ -186,34 +189,50 @@ public class PlayerService extends Service implements MediaPlayer.OnCompletionLi
     }
 
     public void nextTrack() {
-        mPlayerCallbackListener.playerLoading();
-        if (!mSongList.isLast()) {
-            mSongList.moveToNext();
+        if(HelperFunction.hasConnection(this)){
+            mPlayerCallbackListener.playerLoading();
+            if (!mSongList.isLast()) {
+                mSongList.moveToNext();
 
-        } else {
-            mSongList.moveToFirst();
+            } else {
+                mSongList.moveToFirst();
+            }
+            settingTrackInfo();
+            refreshTrackInfoBundle();
+            mPlayerCallbackListener.trackInfoReady(mTrackInfo);
+            showNotification(true);
+            settingTrackUrl();
+            settingPlayer();
+        }else{
+            if(mShowToast != null){
+                mShowToast.cancel();
+            }
+            mShowToast = HelperFunction.showToast(R.string.no_network_connection_text, this);
+            mShowToast.show();
         }
-        settingTrackInfo();
-        refreshTrackInfoBundle();
-        mPlayerCallbackListener.trackInfoReady(mTrackInfo);
-        showNotification(true);
-        settingTrackUrl();
-        settingPlayer();
     }
 
     public void previousTrack() {
-        mPlayerCallbackListener.playerLoading();
-        if (!mSongList.isFirst()) {
-            mSongList.moveToPrevious();
-        } else {
-            mSongList.moveToLast();
+        if(HelperFunction.hasConnection(this)){
+            mPlayerCallbackListener.playerLoading();
+            if (!mSongList.isFirst()) {
+                mSongList.moveToPrevious();
+            } else {
+                mSongList.moveToLast();
+            }
+            settingTrackInfo();
+            refreshTrackInfoBundle();
+            mPlayerCallbackListener.trackInfoReady(mTrackInfo);
+            showNotification(true);
+            settingTrackUrl();
+            settingPlayer();
+        }else{
+            if(mShowToast != null){
+                mShowToast.cancel();
+            }
+            mShowToast = HelperFunction.showToast(R.string.no_network_connection_text, this);
+            mShowToast.show();
         }
-        settingTrackInfo();
-        refreshTrackInfoBundle();
-        mPlayerCallbackListener.trackInfoReady(mTrackInfo);
-        showNotification(true);
-        settingTrackUrl();
-        settingPlayer();
     }
 
     public boolean isPlaying() {
